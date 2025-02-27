@@ -38,3 +38,26 @@ func (d DownloadService) GetDownloads(ctx context.Context) ([]entity.Download, e
 
 	return downloads, nil
 }
+
+func (d DownloadService) GetDownloadById(ctx context.Context, id string) (*entity.Download, error) {
+	var (
+		download *entity.Download
+		err      error
+	)
+
+	queryFunc := func(r *repository.Repo) error {
+		download, err = r.Tables.Downloads.GetDownloadById(ctx, id)
+		if err != nil {
+			return fmt.Errorf("getting data from downloads: %w", err)
+		}
+
+		return nil
+	}
+
+	err = d.db.Query(queryFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return download, nil
+}
