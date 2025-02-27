@@ -7,5 +7,6 @@ import (
 )
 
 type DownloadRepository interface {
-	GetDownloads(ctx context.Context) ([]entity.Download , error)
+	GetDownloads(ctx context.Context) ([]entity.Download, error)
+	GetDownloadById(ctx context.Context, id string) (*entity.Download, error)
 }
