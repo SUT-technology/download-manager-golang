@@ -29,7 +29,7 @@ func Run() error {
 	if err != nil {
 		return fmt.Errorf("connecting to database: %w", err)
 	}
-	slog.Debug("initialized oracle database")
+	slog.Debug("initialized json database")
 
 	srvcs := services.New(db)
 
@@ -38,13 +38,22 @@ func Run() error {
 	// SAMPLE USE HANDLERS
 	hndlrs := handlers.New(srvcs)
 
-	downloads, err := hndlrs.DownloadHndlr.GetDownloads()
+	// downloads, err := hndlrs.DownloadHndlr.GetDownloads()
 
-	if err != nil {
+	// if err != nil {
+	// 	return err
+	// }
+
+	// fmt.Println(downloads)
+
+	download , err := hndlrs.DownloadHndlr.GetDownloadById("3")
+	if err != nil{
 		return err
 	}
 
-	fmt.Println(downloads)
+	fmt.Println(download)
+
+
 
 	return nil
 }
