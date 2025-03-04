@@ -1,4 +1,4 @@
-package UI
+package tabs
 
 import (
 	"fmt"
