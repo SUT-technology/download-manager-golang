@@ -11,6 +11,7 @@ import (
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
 	"github.com/SUT-technology/download-manager-golang/pkg/tools/slogger"
+	"github.com/SUT-technology/download-manager-golang/internal/UI"
 )
 
 func Run() error {
@@ -34,6 +35,8 @@ func Run() error {
 	srvcs := services.New(db)
 
 	// RUN UI AND USE IT
+
+	UI.Run()
 
 	// SAMPLE USE HANDLERS
 	hndlrs := handlers.New(srvcs)
