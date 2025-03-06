@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
-
 	"github.com/SUT-technology/download-manager-golang/cmd/DM/command"
+	
 )
 
 func main() {
@@ -13,4 +13,5 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+    
 }

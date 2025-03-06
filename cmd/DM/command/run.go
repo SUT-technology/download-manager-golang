@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"sync"
 
 	"github.com/SUT-technology/download-manager-golang/internal/application/services"
 	"github.com/SUT-technology/download-manager-golang/internal/infrastructure/db"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
+	"github.com/SUT-technology/download-manager-golang/internal/ui"
 	"github.com/SUT-technology/download-manager-golang/pkg/tools/slogger"
 )
 
@@ -35,6 +37,13 @@ func Run() error {
 
 	// RUN UI AND USE IT
 
+	var wg sync.WaitGroup
+
+	go ui.Run(&wg)
+
+
+	// ui.Run()
+
 	// SAMPLE USE HANDLERS
 	hndlrs := handlers.New(srvcs)
 
@@ -55,5 +64,6 @@ func Run() error {
 
 
 
+	wg.Wait()
 	return nil
 }
