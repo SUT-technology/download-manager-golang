@@ -1,10 +1,8 @@
 package entity
 
-import "net/url"
-
 type Download struct {
 	ID           string  `json:"id"`
-	URL          url.URL `json:"url"`
+	URL          string  `json:"url"`
 	Queue        *Queue  `json:"queue"`
 	FileName     string  `json:"fileName"`
 	Status       int     `json:"status"`

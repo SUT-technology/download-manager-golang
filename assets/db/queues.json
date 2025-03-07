@@ -1,0 +1,13 @@
+[
+  {
+    "id": "1",
+    "name": "tst",
+    "savePath": "tmp",
+    "maximumDownloads": 2,
+    "maximumBandWidth": 5,
+    "activityInterval": {
+      "StartTime": "0001-01-01T00:00:00Z",
+      "EndTime": "0001-01-01T00:00:00Z"
+    }
+  }
+]

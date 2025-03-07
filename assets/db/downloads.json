@@ -1,8 +1,1 @@
-[
-    {
-        "id": "1"
-    },
-    {
-        "id": "2"
-    }
-]
+[{"id":"2","url":"https://nex1-music.ir/wp-content/uploads/2025/03/Sasy-Marmoolak-nex1.mp3","queue":{"id":"1","name":"tst","savePath":"tmp","maximumDownloads":2,"maximumBandWidth":5,"activityInterval":{"StartTime":"0001-01-01T00:00:00Z","EndTime":"0001-01-01T00:00:00Z"}},"fileName":"sasy.mp3","status":0,"currentSpeed":0,"progress":0},{"id":"1","url":"https://edge05.86449.ir.cdn.ir/musics/Bahram/single/320/Gear-Box-Bahram.mp3","queue":{"id":"1","name":"tst","savePath":"tmp","maximumDownloads":2,"maximumBandWidth":5,"activityInterval":{"StartTime":"0001-01-01T00:00:00Z","EndTime":"0001-01-01T00:00:00Z"}},"fileName":"bahram.mp3","status":0,"currentSpeed":0,"progress":0},{"id":"1","url":"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3","queue":{"id":"1","name":"tst","savePath":"tmp","maximumDownloads":2,"maximumBandWidth":5,"activityInterval":{"StartTime":"0001-01-01T00:00:00Z","EndTime":"0001-01-01T00:00:00Z"}},"fileName":"bahram.mp3","status":0,"currentSpeed":0,"progress":0}]

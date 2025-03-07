@@ -45,12 +45,14 @@ func Run() error {
 
 	// fmt.Println(downloads)
 
-	download, err := hndlrs.DownloadHndlr.GetDownloadById("1")
+	//hndlrs.QueueHndlr.CreateQueue("tst", "tmp", 2, 5, entity.TimeInterval{})
+	queue, err := hndlrs.QueueHndlr.GetQueueById("1")
 	if err != nil {
-		return err
+		return fmt.Errorf("getting queue: %w", err)
 	}
 
-	fmt.Println(download)
+	hndlrs.DownloadHndlr.CreateDownload(
+		"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3", queue, "bahram.mp3")
 
 	return nil
 }

@@ -61,3 +61,25 @@ func (d DownloadService) GetDownloadById(ctx context.Context, id string) (*entit
 
 	return download, nil
 }
+
+func (d DownloadService) CreateDownload(ctx context.Context, download entity.Download) error {
+	var (
+		err error
+	)
+
+	queryFunc := func(r *repository.Repo) error {
+		err = r.Tables.Downloads.CreateDownload(ctx, download)
+		if err != nil {
+			return fmt.Errorf("creating download: %w", err)
+		}
+
+		return nil
+	}
+
+	err = d.db.Query(queryFunc)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
