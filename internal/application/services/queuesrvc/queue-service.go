@@ -61,3 +61,25 @@ func (q QueueService) GetQueueById(ctx context.Context, id string) (*entity.Queu
 
 	return queue, nil
 }
+
+func (q QueueService) CreateQueue(ctx context.Context, queue entity.Queue) error {
+	var (
+		err error
+	)
+
+	queryFunc := func(r *repository.Repo) error {
+		err = r.Tables.Queues.CreateQueue(ctx, queue)
+		if err != nil {
+			return fmt.Errorf("creating queue: %w", err)
+		}
+
+		return nil
+	}
+
+	err = q.db.Query(queryFunc)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

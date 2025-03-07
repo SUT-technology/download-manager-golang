@@ -52,3 +52,16 @@ func (p *Pool) loadData(filePath string, dst interface{}) error {
 
 	return nil
 }
+
+func (p *Pool) saveData(filePath string, src interface{}) error {
+	files, err := os.Create(filePath)
+	if err != nil {
+		return fmt.Errorf("could not create downloads/queues file: %v", err)
+	}
+	defer files.Close()
+	if err := json.NewEncoder(files).Encode(src); err != nil {
+		return fmt.Errorf("could not encode data to file: %v", err)
+	}
+
+	return nil
+}

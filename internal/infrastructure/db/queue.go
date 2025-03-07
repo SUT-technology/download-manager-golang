@@ -14,18 +14,18 @@ func newqueuesTable(p *Pool) queueTable {
 	return queueTable{pool: p}
 }
 
-func (d queueTable) GetQueues(ctx context.Context) ([]entity.Queue, error) {
+func (q queueTable) GetQueues(ctx context.Context) ([]entity.Queue, error) {
 	var queueData []entity.Queue
-	err := d.pool.loadData(d.pool.queuePath, &queueData)
+	err := q.pool.loadData(q.pool.queuePath, &queueData)
 	if err != nil {
 		return nil, fmt.Errorf("can't load data from json: %w", err)
 	}
 	return queueData, nil
 }
 
-func (d queueTable) GetQueueById(ctx context.Context, id string) (*entity.Queue, error) {
+func (q queueTable) GetQueueById(ctx context.Context, id string) (*entity.Queue, error) {
 	var queueData []entity.Queue
-	err := d.pool.loadData(d.pool.queuePath, &queueData)
+	err := q.pool.loadData(q.pool.queuePath, &queueData)
 	if err != nil {
 		return nil, fmt.Errorf("can't load data from json: %w", err)
 	}
@@ -39,4 +39,22 @@ func (d queueTable) GetQueueById(ctx context.Context, id string) (*entity.Queue,
 	}
 
 	return queue, nil
+}
+
+func (q queueTable) CreateQueue(ctx context.Context, queue entity.Queue) error {
+	var queueData []entity.Queue
+	err := q.pool.loadData(q.pool.queuePath, &queueData)
+	if err != nil {
+		return fmt.Errorf("can't load data from json: %w", err)
+	}
+
+	queueData = append(queueData, queue)
+
+	//TODO: implement saveData
+	err = q.pool.saveData(q.pool.queuePath, queueData)
+	if err != nil {
+		return fmt.Errorf("can't save data to json: %w", err)
+	}
+
+	return nil
 }
