@@ -9,6 +9,7 @@ type Pool interface {
 
 type Tables struct {
 	Downloads DownloadRepository
+	Queues    QueueRepository
 }
 
 type Repo struct {

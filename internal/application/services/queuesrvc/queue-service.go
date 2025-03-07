@@ -1,0 +1,63 @@
+package queuesrvc
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
+	"github.com/SUT-technology/download-manager-golang/internal/repository"
+)
+
+type QueueService struct {
+	db repository.Pool
+}
+
+func NewQueueServices(db repository.Pool) QueueService {
+	return QueueService{db: db}
+}
+
+func (q QueueService) GetQueues(ctx context.Context) ([]entity.Queue, error) {
+
+	var (
+		queues []entity.Queue
+		err    error
+	)
+	queryFunc := func(r *repository.Repo) error {
+		queues, err = r.Tables.Queues.GetQueues(ctx)
+		if err != nil {
+			return fmt.Errorf("getting data from queues: %w", err)
+		}
+
+		return nil
+	}
+
+	err = q.db.Query(queryFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return queues, nil
+}
+
+func (q QueueService) GetQueueById(ctx context.Context, id string) (*entity.Queue, error) {
+	var (
+		queue *entity.Queue
+		err   error
+	)
+
+	queryFunc := func(r *repository.Repo) error {
+		queue, err = r.Tables.Queues.GetQueueById(ctx, id)
+		if err != nil {
+			return fmt.Errorf("getting data from queues: %w", err)
+		}
+
+		return nil
+	}
+
+	err = q.db.Query(queryFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return queue, nil
+}

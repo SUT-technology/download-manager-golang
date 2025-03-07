@@ -39,7 +39,5 @@ func (d downloadTable) GetDownloadById(ctx context.Context, id string) (*entity.
 		}
 	}
 
-	
-
 	return download, nil
 }

@@ -11,11 +11,13 @@ import (
 
 type Pool struct {
 	downloadPath string
+	queuePath    string
 }
 
 func New(cfg config.DB) (*Pool, error) {
 	return &Pool{
 		downloadPath: cfg.Downloads,
+		queuePath:    cfg.Queues,
 	}, nil
 }
 
@@ -24,6 +26,7 @@ func (p *Pool) Query(f func(r *repository.Repo) error) error {
 	repo := &repository.Repo{
 		Tables: repository.Tables{
 			Downloads: newdownloadsTable(p),
+			Queues:    newqueuesTable(p),
 		},
 	}
 
@@ -40,7 +43,7 @@ func (p *Pool) Close() error {
 func (p *Pool) loadData(filePath string, dst interface{}) error {
 	files, err := os.Open(filePath)
 	if err != nil {
-		return fmt.Errorf("could not open downloads file: %v", err)
+		return fmt.Errorf("could not open downloads/queues file: %v", err)
 	}
 	defer files.Close()
 	if err := json.NewDecoder(files).Decode(&dst); err != nil {

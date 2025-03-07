@@ -3,16 +3,13 @@ package command
 import (
 	"flag"
 	"fmt"
-	"log/slog"
-	"os"
-	"sync"
-
 	"github.com/SUT-technology/download-manager-golang/internal/application/services"
 	"github.com/SUT-technology/download-manager-golang/internal/infrastructure/db"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
-	"github.com/SUT-technology/download-manager-golang/internal/ui"
 	"github.com/SUT-technology/download-manager-golang/pkg/tools/slogger"
+	"log/slog"
+	"os"
 )
 
 func Run() error {
@@ -37,13 +34,6 @@ func Run() error {
 
 	// RUN UI AND USE IT
 
-	var wg sync.WaitGroup
-
-	go ui.Run(&wg)
-
-
-	// ui.Run()
-
 	// SAMPLE USE HANDLERS
 	hndlrs := handlers.New(srvcs)
 
@@ -55,15 +45,12 @@ func Run() error {
 
 	// fmt.Println(downloads)
 
-	download , err := hndlrs.DownloadHndlr.GetDownloadById("3")
-	if err != nil{
+	download, err := hndlrs.DownloadHndlr.GetDownloadById("1")
+	if err != nil {
 		return err
 	}
 
 	fmt.Println(download)
 
-
-
-	wg.Wait()
 	return nil
 }
