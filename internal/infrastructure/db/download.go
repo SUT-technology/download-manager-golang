@@ -41,20 +41,27 @@ func (d downloadTable) GetDownloadById(ctx context.Context, id string) (*entity.
 
 	return download, nil
 }
-func (d downloadTable) CreateDownload(ctx context.Context, download entity.Download) error {
+func (d downloadTable) CreateDownload(ctx context.Context, url string, queueId string, fileName string) (*entity.Download, error) {
 	var downloadData []entity.Download
 	err := d.pool.loadData(d.pool.downloadPath, &downloadData)
 	if err != nil {
-		return fmt.Errorf("can't load data from json: %w", err)
+		return nil, fmt.Errorf("can't load data from json: %w", err)
 	}
 
-	downloadData = append(downloadData, download)
+	download := &entity.Download{
+		ID:       "0",
+		URL:      url,
+		QueueId:  queueId,
+		FileName: fileName,
+	}
+
+	downloadData = append(downloadData, *download)
 
 	//TODO: implement saveData
 	err = d.pool.saveData(d.pool.downloadPath, downloadData)
 	if err != nil {
-		return fmt.Errorf("can't save data to json: %w", err)
+		return nil, fmt.Errorf("can't save data to json: %w", err)
 	}
 
-	return nil
+	return download, nil
 }
