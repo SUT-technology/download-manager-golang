@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/application/services"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"github.com/SUT-technology/download-manager-golang/internal/infrastructure/db"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
@@ -46,8 +47,14 @@ func Run() error {
 
 	// fmt.Println(downloads)
 
-	//hndlrs.QueueHndlr.CreateQueue("tst", "tmp", 2, 5, entity.TimeInterval{})
-	queue, err := hndlrs.QueueHndlr.GetQueueById("1")
+	hndlrs.QueueHndlr.CreateQueue(dto.QueueDto{
+		"tst22",
+		"tmp/tmp2",
+		0,
+		0,
+		entity.TimeInterval{},
+	})
+	queue, err := hndlrs.QueueHndlr.GetQueueById("2")
 	if err != nil {
 		return fmt.Errorf("getting queue: %w", err)
 	}

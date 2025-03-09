@@ -41,11 +41,20 @@ func (q queueTable) GetQueueById(ctx context.Context, id string) (*entity.Queue,
 	return queue, nil
 }
 
-func (q queueTable) CreateQueue(ctx context.Context, queue entity.Queue) error {
+func (q queueTable) CreateQueue(ctx context.Context, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) error {
 	var queueData []entity.Queue
 	err := q.pool.loadData(q.pool.queuePath, &queueData)
 	if err != nil {
 		return fmt.Errorf("can't load data from json: %w", err)
+	}
+
+	queue := entity.Queue{
+		ID:               "2",
+		Name:             name,
+		SavePath:         savePath,
+		MaximumDownloads: maximumDownload,
+		MaximumBandWidth: maximumBandWidth,
+		ActivityInterval: activityInterval,
 	}
 
 	queueData = append(queueData, queue)

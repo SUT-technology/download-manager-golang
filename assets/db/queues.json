@@ -1,13 +1,1 @@
-[
-  {
-    "id": "1",
-    "name": "tst",
-    "savePath": "tmp",
-    "maximumDownloads": 2,
-    "maximumBandWidth": 5,
-    "activityInterval": {
-      "StartTime": "0001-01-01T00:00:00Z",
-      "EndTime": "0001-01-01T00:00:00Z"
-    }
-  }
-]
+[{"id":"1","name":"tst","savePath":"tmp","maximumDownloads":2,"maximumBandWidth":5,"activityInterval":{"StartTime":"0001-01-01T00:00:00Z","EndTime":"0001-01-01T00:00:00Z"}},{"id":"2","name":"tst22","savePath":"tmp/tmp2","maximumDownloads":0,"maximumBandWidth":0,"activityInterval":{"StartTime":"0001-01-01T00:00:00Z","EndTime":"0001-01-01T00:00:00Z"}}]
