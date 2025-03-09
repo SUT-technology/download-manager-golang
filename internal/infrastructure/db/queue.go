@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
+	"github.com/SUT-technology/download-manager-golang/pkg/tools/generator"
 )
 
 type queueTable struct {
@@ -48,8 +49,14 @@ func (q queueTable) CreateQueue(ctx context.Context, name string, savePath strin
 		return fmt.Errorf("can't load data from json: %w", err)
 	}
 
+	ids := make([]string, len(queueData))
+	for i, q := range queueData {
+		ids[i] = q.ID
+	}
+	id := generator.IdGenerator(ids)
+
 	queue := entity.Queue{
-		ID:               "2",
+		ID:               id,
 		Name:             name,
 		SavePath:         savePath,
 		MaximumDownloads: maximumDownload,
@@ -59,7 +66,6 @@ func (q queueTable) CreateQueue(ctx context.Context, name string, savePath strin
 
 	queueData = append(queueData, queue)
 
-	//TODO: implement saveData
 	err = q.pool.saveData(q.pool.queuePath, queueData)
 	if err != nil {
 		return fmt.Errorf("can't save data to json: %w", err)
