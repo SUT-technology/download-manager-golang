@@ -61,7 +61,7 @@ func Run() error {
 
 	hndlrs.DownloadHndlr.CreateDownload(dto.DownloadDto{
 		URL:      "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
-		Queue:    queue,
+		QueueID:  queue.ID,
 		FileName: "bahram.mp3",
 	})
 
