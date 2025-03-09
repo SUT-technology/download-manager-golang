@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"github.com/SUT-technology/download-manager-golang/pkg/tools/generator"
 
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 )
@@ -48,8 +49,14 @@ func (d downloadTable) CreateDownload(ctx context.Context, url string, queueId s
 		return nil, fmt.Errorf("can't load data from json: %w", err)
 	}
 
+	ids := make([]string, len(downloadData))
+	for i, download := range downloadData {
+		ids[i] = download.ID
+	}
+	id := generator.IdGenerator(ids)
+
 	download := &entity.Download{
-		ID:       "0",
+		ID:       id,
 		URL:      url,
 		QueueId:  queueId,
 		FileName: fileName,
