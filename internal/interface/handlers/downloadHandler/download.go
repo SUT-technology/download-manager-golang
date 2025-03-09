@@ -58,7 +58,7 @@ func (h DownloadHndlr) CreateDownload(downloadDto dto.DownloadDto) error {
 
 	slogger.Debug(ctx, "recieve request", slog.Any("download", downloadDto))
 
-	err := h.Services.DownloadSrvc.CreateDownload(ctx, downloadDto.URL, downloadDto.Queue.ID, downloadDto.FileName)
+	err := h.Services.DownloadSrvc.CreateDownload(ctx, downloadDto.URL, downloadDto.QueueID, downloadDto.FileName)
 	if err != nil {
 		slogger.Debug(ctx, "create download", slog.Any("download", downloadDto), slogger.Err("error", err))
 		return fmt.Errorf("create download: %w", err)
