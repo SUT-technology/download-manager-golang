@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/application/services"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"github.com/SUT-technology/download-manager-golang/internal/infrastructure/db"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
@@ -51,8 +52,11 @@ func Run() error {
 		return fmt.Errorf("getting queue: %w", err)
 	}
 
-	hndlrs.DownloadHndlr.CreateDownload(
-		"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3", queue, "bahram.mp3")
+	hndlrs.DownloadHndlr.CreateDownload(dto.DownloadDto{
+		URL:      "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
+		Queue:    queue,
+		FileName: "bahram.mp3",
+	})
 
 	return nil
 }

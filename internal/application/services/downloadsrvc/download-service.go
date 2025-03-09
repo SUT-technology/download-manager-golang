@@ -3,6 +3,11 @@ package downloadsrvc
 import (
 	"context"
 	"fmt"
+	"github.com/SUT-technology/download-manager-golang/internal/application/services/queuesrvc"
+	"io"
+	"net/http"
+	"os"
+	"sync"
 
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"github.com/SUT-technology/download-manager-golang/internal/repository"
@@ -62,13 +67,14 @@ func (d DownloadService) GetDownloadById(ctx context.Context, id string) (*entit
 	return download, nil
 }
 
-func (d DownloadService) CreateDownload(ctx context.Context, download entity.Download) error {
+func (d DownloadService) CreateDownload(ctx context.Context, url string, queueId string, fileName string) error {
 	var (
-		err error
+		download *entity.Download
+		err      error
 	)
 
 	queryFunc := func(r *repository.Repo) error {
-		err = r.Tables.Downloads.CreateDownload(ctx, download)
+		download, err = r.Tables.Downloads.CreateDownload(ctx, url, queueId, fileName)
 		if err != nil {
 			return fmt.Errorf("creating download: %w", err)
 		}
@@ -80,6 +86,43 @@ func (d DownloadService) CreateDownload(ctx context.Context, download entity.Dow
 	if err != nil {
 		return err
 	}
+
+	queueSrvc := queuesrvc.NewQueueServices(d.db)
+
+	queue, err := queueSrvc.GetQueueById(ctx, download.QueueId)
+	if err != nil {
+		return err
+	}
+
+	wg := sync.WaitGroup{}
+
+	wg.Add(1)
+	go func() error {
+		defer wg.Done()
+		resp, err := http.Get(download.URL)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		// Check if the request was successful
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("failed to download file: %s", resp.Status)
+		}
+
+		// Create the output file
+		outFile, err := os.Create(queue.SavePath + "/" + download.FileName)
+		if err != nil {
+			return err
+		}
+		defer outFile.Close()
+
+		// Copy the response body to the file
+		_, err = io.Copy(outFile, resp.Body)
+		return err
+	}()
+
+	wg.Wait()
 
 	return nil
 }
