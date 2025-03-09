@@ -3,7 +3,7 @@ package queueHandler
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"log/slog"
 
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
@@ -49,42 +49,14 @@ func (h QueueHndlr) GetQueueById(id string) (*entity.Queue, error) {
 	return queue, nil
 }
 
-func (h QueueHndlr) CreateQueue(name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) error {
+func (h QueueHndlr) CreateQueue(queueDto dto.QueueDto) error {
 	ctx := context.Background()
 
-	var id string
-	for {
-		id = uuid.New().String()
-		queues, err := h.Services.QueueSrvc.GetQueues(ctx)
-		if err != nil {
-			return fmt.Errorf(fmt.Sprintf("get queues: %w", err))
-		}
-		flag := false
-		for _, queue := range queues {
-			if queue.ID == id {
-				flag = true
-				break
-			}
-		}
-		if !flag {
-			break
-		}
-	}
+	slogger.Debug(ctx, "recieve request", slog.Any("queueDto", queueDto))
 
-	queue := entity.Queue{
-		ID:               id,
-		Name:             name,
-		SavePath:         savePath,
-		MaximumDownloads: maximumDownload,
-		MaximumBandWidth: maximumBandWidth,
-		ActivityInterval: activityInterval,
-	}
-
-	slogger.Debug(ctx, "recieve request", slog.Any("queue", queue))
-
-	err := h.Services.QueueSrvc.CreateQueue(ctx, queue)
+	err := h.Services.QueueSrvc.CreateQueue(ctx, queueDto.Name, queueDto.SavePath, queueDto.MaximumDownloads, queueDto.MaximumBandWidth, queueDto.ActivityInterval)
 	if err != nil {
-		slogger.Debug(ctx, "create queue", slog.Any("queue", queue), slogger.Err("error", err))
+		slogger.Debug(ctx, "create queue", slog.Any("queueDto", queueDto), slogger.Err("error", err))
 		return fmt.Errorf("create queue: %w", err)
 	}
 

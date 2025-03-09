@@ -56,32 +56,6 @@ func (h DownloadHndlr) GetDownloadById(id string) (*entity.Download, error) {
 func (h DownloadHndlr) CreateDownload(downloadDto dto.DownloadDto) error {
 	ctx := context.Background()
 
-	//var id string
-	//for {
-	//	id = uuid.New().String()
-	//	downloads, err := h.Services.DownloadSrvc.GetDownloads(ctx)
-	//	if err != nil {
-	//		return fmt.Errorf(fmt.Sprintf("get downloads: %w", err))
-	//	}
-	//	flag := false
-	//	for _, download := range downloads {
-	//		if download.ID == id {
-	//			flag = true
-	//			break
-	//		}
-	//	}
-	//	if !flag {
-	//		break
-	//	}
-	//}
-
-	//download := entity.Download{
-	//	ID:       id,
-	//	URL:      url,
-	//	QueueId:  queue.ID,
-	//	FileName: fileName,
-	//}
-
 	slogger.Debug(ctx, "recieve request", slog.Any("download", downloadDto))
 
 	err := h.Services.DownloadSrvc.CreateDownload(ctx, downloadDto.URL, downloadDto.Queue.ID, downloadDto.FileName)
