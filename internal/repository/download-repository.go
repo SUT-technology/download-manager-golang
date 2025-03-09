@@ -9,4 +9,5 @@ import (
 type DownloadRepository interface {
 	GetDownloads(ctx context.Context) ([]entity.Download, error)
 	GetDownloadById(ctx context.Context, id string) (*entity.Download, error)
+	CreateDownload(ctx context.Context, url string, queueId string, fileName string) (*entity.Download, error)
 }

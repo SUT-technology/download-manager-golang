@@ -3,11 +3,15 @@ package downloadHandler
 import (
 	"context"
 	"fmt"
-	"log/slog"
-
+	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"github.com/SUT-technology/download-manager-golang/internal/service"
 	"github.com/SUT-technology/download-manager-golang/pkg/tools/slogger"
+	"log/slog"
+	//"io"
+	//"net/http"
+	//"os"
+	//"sync"
 )
 
 type DownloadHndlr struct {
@@ -46,4 +50,19 @@ func (h DownloadHndlr) GetDownloadById(id string) (*entity.Download, error) {
 	}
 
 	return download, nil
+}
+
+// TODO: change outputs
+func (h DownloadHndlr) CreateDownload(downloadDto dto.DownloadDto) error {
+	ctx := context.Background()
+
+	slogger.Debug(ctx, "recieve request", slog.Any("download", downloadDto))
+
+	err := h.Services.DownloadSrvc.CreateDownload(ctx, downloadDto.URL, downloadDto.QueueID, downloadDto.FileName)
+	if err != nil {
+		slogger.Debug(ctx, "create download", slog.Any("download", downloadDto), slogger.Err("error", err))
+		return fmt.Errorf("create download: %w", err)
+	}
+
+	return nil
 }
