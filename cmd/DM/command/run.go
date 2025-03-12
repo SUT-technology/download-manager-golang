@@ -4,14 +4,14 @@ import (
 	"flag"
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/application/services"
-	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
-	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"github.com/SUT-technology/download-manager-golang/internal/infrastructure/db"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
+	"github.com/SUT-technology/download-manager-golang/internal/ui"
 	"github.com/SUT-technology/download-manager-golang/pkg/tools/slogger"
 	"log/slog"
 	"os"
+	"sync"
 )
 
 func Run() error {
@@ -34,10 +34,26 @@ func Run() error {
 
 	srvcs := services.New(db)
 
+	// SAMPLE USE HANDLERS
+
+	hndlrs := handlers.New(srvcs)
+
 	// RUN UI AND USE IT
 
-	// SAMPLE USE HANDLERS
-	hndlrs := handlers.New(srvcs)
+	//wg := sync.WaitGroup{}
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	var err1 error
+
+	go func() {
+		err1 = ui.Run(&wg, &hndlrs)
+	}()
+
+	if err1 != nil {
+		return fmt.Errorf("running ui: %w", err)
+	}
 
 	// downloads, err := hndlrs.DownloadHndlr.GetDownloads()
 
@@ -46,24 +62,26 @@ func Run() error {
 	// }
 
 	// fmt.Println(downloads)
+	//
+	//hndlrs.QueueHndlr.CreateQueue(dto.QueueDto{
+	//	"tst22",
+	//	"tmp/tmp2",
+	//	0,
+	//	0,
+	//	entity.TimeInterval{},
+	//})
+	//queue, err := hndlrs.QueueHndlr.GetQueueById("2")
+	//if err != nil {
+	//	return fmt.Errorf("getting queue: %w", err)
+	//}
+	//
+	//hndlrs.DownloadHndlr.CreateDownload(dto.DownloadDto{
+	//	URL:      "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
+	//	QueueID:  queue.ID,
+	//	FileName: "bahram.mp3",
+	//})
 
-	hndlrs.QueueHndlr.CreateQueue(dto.QueueDto{
-		"tst22",
-		"tmp/tmp2",
-		0,
-		0,
-		entity.TimeInterval{},
-	})
-	queue, err := hndlrs.QueueHndlr.GetQueueById("2")
-	if err != nil {
-		return fmt.Errorf("getting queue: %w", err)
-	}
-
-	hndlrs.DownloadHndlr.CreateDownload(dto.DownloadDto{
-		URL:      "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
-		QueueID:  queue.ID,
-		FileName: "bahram.mp3",
-	})
+	wg.Wait()
 
 	return nil
 }
