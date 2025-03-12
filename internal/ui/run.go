@@ -2,17 +2,35 @@ package ui
 
 import (
 	"fmt"
+	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
 	"sync"
 
+	//"github.com/SUT-technology/download-manager-golang/internal/interface/handlers/downloadHandler"
+	//"github.com/SUT-technology/download-manager-golang/internal/interface/handlers/queueHandler"
+	"github.com/SUT-technology/download-manager-golang/internal/ui/model"
 	"github.com/SUT-technology/download-manager-golang/internal/ui/model/tabs"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func Run(wg *sync.WaitGroup) error {
-	wg.Add(1)
+var Hndlr model.Handlers
+
+func Run(wg *sync.WaitGroup, srcv *handlers.HandlerSrcv) error {
+	//wg.Add(1)
 	defer wg.Done()
-	tabs.CurrentTab.Init()
-	p := tea.NewProgram(tabs.CurrentTab)
+
+	Hndlr = model.Handlers{
+		DownloadHandler: &srcv.DownloadHndlr,
+		QueueHandler:    &srcv.QueueHndlr,
+	}
+
+	//Handlrs.DownloadHandler.CreateDownload(dto.DownloadDto{
+	//	URL:      "google.com",
+	//	QueueID:  "5",
+	//	FileName: "tst",
+	//})
+	//tabs.CurrentTab.Init()
+
+	p := tea.NewProgram(tabs.InitialModel(&Hndlr))
 	if err := p.Start(); err != nil {
 		fmt.Printf("Error starting program: %v\n", err)
 	}
