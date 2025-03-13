@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
+	"github.com/charmbracelet/lipgloss"
+	"strings"
+
 	//"github.com/SUT-technology/download-manager-golang/internal/ui"
 
 	//"github.com/SUT-technology/download-manager-golang/internal/ui"
@@ -32,6 +35,7 @@ type addDownloadModel struct {
 	fileName        string
 	fileNameInput   textinput.Model
 	cursorIndex     int
+	finished        bool
 }
 
 var CurrentTab *Tab
@@ -44,7 +48,9 @@ func InitialModel(Hndlr *model.Handlers) Tab {
 	hndlr = *Hndlr
 
 	uInp := textinput.New()
-	uInp.Placeholder = "Pikachu"
+	uInp.Placeholder = "url"
+	//uInp.PlaceholderStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("180"))
+	uInp.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
 	uInp.Focus()
 	uInp.Width = 100
 
@@ -67,6 +73,8 @@ func InitialModel(Hndlr *model.Handlers) Tab {
 
 	fInp := textinput.New()
 	fInp.Placeholder = "Pikachu"
+	//fInp.PlaceholderStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("180"))
+	fInp.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
 	fInp.Focus()
 	fInp.Width = 100
 
@@ -80,8 +88,9 @@ func InitialModel(Hndlr *model.Handlers) Tab {
 			//queues:        queuesString,
 			selectedQueueId: "",
 			fileName:        "",
-			fileNameInput:   uInp,
+			fileNameInput:   fInp,
 			cursorIndex:     0,
+			finished:        false,
 		},
 	}
 }
@@ -107,7 +116,17 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return tab, nil
 		}
 
-		if tab.adm.url == "" {
+		if tab.adm.finished {
+			switch msg := msg.(type) {
+			case tea.KeyMsg:
+				if key := msg.String(); strings.ToLower(key)[0] == 'y' {
+					tab.adm.finished = false
+					return InitialModel(&hndlr), nil
+				} else if strings.ToLower(key)[0] == 'n' {
+					return tab, tea.Quit
+				}
+			}
+		} else if tab.adm.url == "" {
 
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
@@ -142,17 +161,14 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case tea.KeyEnter:
 					tab.adm.fileName = tab.adm.fileNameInput.Value()
 
-					//Todo change filename
-					if tab.adm.fileName == "" {
-						tab.adm.fileName = "default"
-					}
-
 					err := CreateDownload(tab.adm.url, tab.adm.selectedQueueId, tab.adm.fileName)
 					if err != nil {
 						tab.err = err
-						return tab, nil
+						//return tab, nil
 					}
 
+					tab.adm.finished = true
+					return tab, nil
 				}
 				tab.adm.fileNameInput, cmd = tab.adm.fileNameInput.Update(msg)
 			}
@@ -165,11 +181,13 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (tab Tab) View() string {
 	var view string
 	if tab.num == 1 {
-		if tab.adm.url == "" {
+		if tab.adm.finished {
+			view = "Download added successfully!\n\nDo you want to continue? (y/n)"
+		} else if tab.adm.url == "" {
 			view = fmt.Sprintf(
-				"Enter the url here:\n\n%s\n\n%s",
+				"\nEnter the url here:\n\n%s\n\n%s",
 				tab.adm.urlInput.View(),
-				"(esc to quit)",
+				"(ctrl+c to quit)",
 			) + "\n"
 		} else if tab.adm.selectedQueueId == "" {
 			//view = fmt.Sprintf(
@@ -177,7 +195,7 @@ func (tab Tab) View() string {
 			//	tab.adm.urlInput.View(),
 			//	"(esc to quit)",
 			//) + "\n\n"
-			view = "\nSelect a queue:\n"
+			view = "\nSelect a queue:\n\n"
 			for i, queue := range tab.queues {
 				cursor := " "
 				if i == tab.adm.cursorIndex {
@@ -187,9 +205,9 @@ func (tab Tab) View() string {
 			}
 		} else if tab.adm.fileName == "" {
 			view = fmt.Sprintf(
-				"Enter the file name here:\n\n%s\n\n%s",
+				"\nEnter the file name here (optional):\n\n%s\n\n%s",
 				tab.adm.fileNameInput.View(),
-				"(esc to quit || enter if you do not want to choose)",
+				"(ctrl+c to quit)",
 			) + "\n"
 		}
 	}

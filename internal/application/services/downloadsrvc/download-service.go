@@ -6,7 +6,10 @@ import (
 	"github.com/SUT-technology/download-manager-golang/internal/application/services/queuesrvc"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"path"
+	"strings"
 	"sync"
 
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
@@ -67,14 +70,14 @@ func (d DownloadService) GetDownloadById(ctx context.Context, id string) (*entit
 	return download, nil
 }
 
-func (d DownloadService) CreateDownload(ctx context.Context, url string, queueId string, fileName string) error {
+func (d DownloadService) CreateDownload(ctx context.Context, Url string, queueId string, fileName string) error {
 	var (
 		download *entity.Download
 		err      error
 	)
 
 	queryFunc := func(r *repository.Repo) error {
-		download, err = r.Tables.Downloads.CreateDownload(ctx, url, queueId, fileName)
+		download, err = r.Tables.Downloads.CreateDownload(ctx, Url, queueId, fileName)
 		if err != nil {
 			return fmt.Errorf("creating download: %w", err)
 		}
@@ -110,8 +113,19 @@ func (d DownloadService) CreateDownload(ctx context.Context, url string, queueId
 			return fmt.Errorf("failed to download file: %s", resp.Status)
 		}
 
+		parsedURL, err2 := url.Parse(download.URL)
+		if err2 != nil {
+			return err2
+		}
+		ext := path.Ext(parsedURL.Path)        // Get extension (e.g., .mp4)
+		format := strings.TrimPrefix(ext, ".") // Remove leading dot
+
+		if download.FileName == "" {
+			download.FileName = path.Base(parsedURL.Path)
+		}
+
 		// Create the output file
-		outFile, err := os.Create(queue.SavePath + "/" + download.FileName)
+		outFile, err := os.Create(queue.SavePath + "/" + download.FileName + "." + format)
 		if err != nil {
 			return err
 		}
