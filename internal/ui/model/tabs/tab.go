@@ -4,15 +4,11 @@ import (
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
-	"github.com/charmbracelet/lipgloss"
-	"strings"
-
-	//"github.com/SUT-technology/download-manager-golang/internal/ui"
-
-	//"github.com/SUT-technology/download-manager-golang/internal/ui"
 	"github.com/SUT-technology/download-manager-golang/internal/ui/model"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"strings"
 )
 
 type (
@@ -20,17 +16,28 @@ type (
 )
 
 type Tab struct {
-	num       int
+	num int
+	TAB interface{}
+}
+
+type AddDownloadTab struct {
 	downloads []entity.Download
 	queues    []entity.Queue
 	adm       addDownloadModel
 	err       error
 }
 
+type DownloadsTab struct {
+	downloads []entity.Download
+}
+
+type queuesTableTab struct {
+	queues []entity.Queue
+}
+
 type addDownloadModel struct {
-	url      string
-	urlInput textinput.Model
-	//queues        []string
+	url             string
+	urlInput        textinput.Model
 	selectedQueueId string
 	fileName        string
 	fileNameInput   textinput.Model
@@ -38,18 +45,14 @@ type addDownloadModel struct {
 	finished        bool
 }
 
-var CurrentTab *Tab
-
 var hndlr model.Handlers
 
-var tabs []Tab
+func InitiateAddDownloadTab(Hndlr *model.Handlers) AddDownloadTab {
 
-func InitialModel(Hndlr *model.Handlers) Tab {
 	hndlr = *Hndlr
 
 	uInp := textinput.New()
 	uInp.Placeholder = "url"
-	//uInp.PlaceholderStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("180"))
 	uInp.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
 	uInp.Focus()
 	uInp.Width = 100
@@ -66,26 +69,18 @@ func InitialModel(Hndlr *model.Handlers) Tab {
 		panic(err)
 	}
 
-	//queuesString := make([]string, len(queues))
-	//for i, v := range queues {
-	//	queuesString[i] = v.Name
-	//}
-
 	fInp := textinput.New()
 	fInp.Placeholder = "Pikachu"
-	//fInp.PlaceholderStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("180"))
 	fInp.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
 	fInp.Focus()
 	fInp.Width = 100
 
-	return Tab{
-		num:       1,
+	return AddDownloadTab{
 		downloads: downloads,
 		queues:    queues,
 		adm: addDownloadModel{
-			url:      "",
-			urlInput: uInp,
-			//queues:        queuesString,
+			url:             "",
+			urlInput:        uInp,
 			selectedQueueId: "",
 			fileName:        "",
 			fileNameInput:   fInp,
@@ -95,14 +90,26 @@ func InitialModel(Hndlr *model.Handlers) Tab {
 	}
 }
 
+func InitiateDownloadsTab(Hndlr *model.Handlers) DownloadsTab {
+	hndlr := *Hndlr
+	downloads, err := hndlr.DownloadHandler.GetDownloads()
+	if err != nil {
+		panic(err)
+	}
+	downloadsTab := DownloadsTab{
+		downloads: downloads,
+	}
+	return downloadsTab
+}
+
 func (tab Tab) Init() tea.Cmd {
 	return textinput.Blink
 }
 
 func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	if tab.num == 1 {
-
+	if tab.num == 2 {
+		var addDownloadTab = tab.TAB.(AddDownloadTab)
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch msg.Type {
@@ -112,67 +119,71 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// We handle errors just like any other message
 		case errMsg:
-			tab.err = msg
-			return tab, nil
+			addDownloadTab.err = msg
+			return addDownloadTab, nil
 		}
 
-		if tab.adm.finished {
+		if addDownloadTab.adm.finished {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				if key := msg.String(); strings.ToLower(key)[0] == 'y' {
-					tab.adm.finished = false
-					return InitialModel(&hndlr), nil
+					addDownloadTab.adm.finished = false
+					return InitiateAddDownloadTab(&hndlr), nil
 				} else if strings.ToLower(key)[0] == 'n' {
-					return tab, tea.Quit
+					return addDownloadTab, tea.Quit
 				}
 			}
-		} else if tab.adm.url == "" {
+		} else if addDownloadTab.adm.url == "" {
 
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
 				case tea.KeyEnter:
-					tab.adm.url = tab.adm.urlInput.Value()
+					addDownloadTab.adm.url = addDownloadTab.adm.urlInput.Value()
 				}
-				tab.adm.urlInput, cmd = tab.adm.urlInput.Update(msg)
+				addDownloadTab.adm.urlInput, cmd = addDownloadTab.adm.urlInput.Update(msg)
 			}
 
-		} else if tab.adm.selectedQueueId == "" {
+		} else if addDownloadTab.adm.selectedQueueId == "" {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
 				case tea.KeyUp:
-					if tab.adm.cursorIndex == 0 {
-						tab.adm.cursorIndex = len(tab.queues) - 1
+					if addDownloadTab.adm.cursorIndex == 0 {
+						addDownloadTab.adm.cursorIndex = len(addDownloadTab.queues) - 1
 					} else {
-						tab.adm.cursorIndex--
+						addDownloadTab.adm.cursorIndex--
 					}
 				case tea.KeyDown:
-					tab.adm.cursorIndex = (tab.adm.cursorIndex + 1) % len(tab.queues)
+					addDownloadTab.adm.cursorIndex = (addDownloadTab.adm.cursorIndex + 1) % len(addDownloadTab.queues)
 				case tea.KeyEnter:
-					tab.adm.selectedQueueId = tab.queues[tab.adm.cursorIndex].ID
+					addDownloadTab.adm.selectedQueueId = addDownloadTab.queues[addDownloadTab.adm.cursorIndex].ID
 				}
 			}
 
-		} else if tab.adm.fileName == "" {
+		} else if addDownloadTab.adm.fileName == "" {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
 				case tea.KeyEnter:
-					tab.adm.fileName = tab.adm.fileNameInput.Value()
+					addDownloadTab.adm.fileName = addDownloadTab.adm.fileNameInput.Value()
 
-					err := CreateDownload(tab.adm.url, tab.adm.selectedQueueId, tab.adm.fileName)
+					err := CreateDownload(addDownloadTab.adm.url, addDownloadTab.adm.selectedQueueId, addDownloadTab.adm.fileName)
 					if err != nil {
-						tab.err = err
-						//return tab, nil
+						addDownloadTab.err = err
+						//return addDownloadTab, nil
 					}
 
-					tab.adm.finished = true
-					return tab, nil
+					addDownloadTab.adm.finished = true
+					return addDownloadTab, nil
 				}
-				tab.adm.fileNameInput, cmd = tab.adm.fileNameInput.Update(msg)
+				addDownloadTab.adm.fileNameInput, cmd = addDownloadTab.adm.fileNameInput.Update(msg)
 			}
 		}
+
+	} else if tab.num == 1 {
+
+	} else if tab.num == 3 {
 
 	}
 	return tab, cmd
@@ -181,32 +192,28 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (tab Tab) View() string {
 	var view string
 	if tab.num == 1 {
-		if tab.adm.finished {
+		var addDownloadTab = tab.TAB.(AddDownloadTab)
+		if addDownloadTab.adm.finished {
 			view = "Download added successfully!\n\nDo you want to continue? (y/n)"
-		} else if tab.adm.url == "" {
+		} else if addDownloadTab.adm.url == "" {
 			view = fmt.Sprintf(
 				"\nEnter the url here:\n\n%s\n\n%s",
-				tab.adm.urlInput.View(),
+				addDownloadTab.adm.urlInput.View(),
 				"(ctrl+c to quit)",
 			) + "\n"
-		} else if tab.adm.selectedQueueId == "" {
-			//view = fmt.Sprintf(
-			//	"Enter the url here\n\n%s\n\n%s",
-			//	tab.adm.urlInput.View(),
-			//	"(esc to quit)",
-			//) + "\n\n"
+		} else if addDownloadTab.adm.selectedQueueId == "" {
 			view = "\nSelect a queue:\n\n"
-			for i, queue := range tab.queues {
+			for i, queue := range addDownloadTab.queues {
 				cursor := " "
-				if i == tab.adm.cursorIndex {
+				if i == addDownloadTab.adm.cursorIndex {
 					cursor = ">"
 				}
 				view += fmt.Sprintf("%s %s\n", cursor, queue.Name)
 			}
-		} else if tab.adm.fileName == "" {
+		} else if addDownloadTab.adm.fileName == "" {
 			view = fmt.Sprintf(
 				"\nEnter the file name here (optional):\n\n%s\n\n%s",
-				tab.adm.fileNameInput.View(),
+				addDownloadTab.adm.fileNameInput.View(),
 				"(ctrl+c to quit)",
 			) + "\n"
 		}
