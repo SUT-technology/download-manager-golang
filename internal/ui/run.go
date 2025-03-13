@@ -23,14 +23,7 @@ func Run(wg *sync.WaitGroup, srcv *handlers.HandlerSrcv) error {
 		QueueHandler:    &srcv.QueueHndlr,
 	}
 
-	//Handlrs.DownloadHandler.CreateDownload(dto.DownloadDto{
-	//	URL:      "google.com",
-	//	QueueID:  "5",
-	//	FileName: "tst",
-	//})
-	//tabs.CurrentTab.Init()
-
-	p := tea.NewProgram(tabs.InitialModel(&Hndlr))
+	p := tea.NewProgram(tabs.InitiateAddDownloadTab(&Hndlr))
 	if err := p.Start(); err != nil {
 		fmt.Printf("Error starting program: %v\n", err)
 	}
