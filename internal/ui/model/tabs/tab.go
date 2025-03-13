@@ -8,6 +8,9 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"os"
+	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -47,7 +50,7 @@ type addDownloadModel struct {
 
 var hndlr model.Handlers
 
-func InitiateAddDownloadTab(Hndlr *model.Handlers) AddDownloadTab {
+func InitiateAddDownloadTab(Hndlr *model.Handlers) Tab {
 
 	hndlr = *Hndlr
 
@@ -75,31 +78,35 @@ func InitiateAddDownloadTab(Hndlr *model.Handlers) AddDownloadTab {
 	fInp.Focus()
 	fInp.Width = 100
 
-	return AddDownloadTab{
-		downloads: downloads,
-		queues:    queues,
-		adm: addDownloadModel{
-			url:             "",
-			urlInput:        uInp,
-			selectedQueueId: "",
-			fileName:        "",
-			fileNameInput:   fInp,
-			cursorIndex:     0,
-			finished:        false,
-		},
+	return Tab{
+		num: 1,
+		TAB: AddDownloadTab{
+			downloads: downloads,
+			queues:    queues,
+			adm: addDownloadModel{
+				url:             "",
+				urlInput:        uInp,
+				selectedQueueId: "",
+				fileName:        "",
+				fileNameInput:   fInp,
+				cursorIndex:     0,
+				finished:        false,
+			}},
 	}
 }
 
-func InitiateDownloadsTab(Hndlr *model.Handlers) DownloadsTab {
-	hndlr := *Hndlr
+func InitiateDownloadsTab(Hndlr *model.Handlers) Tab {
+	hndlr = *Hndlr
 	downloads, err := hndlr.DownloadHandler.GetDownloads()
 	if err != nil {
 		panic(err)
 	}
-	downloadsTab := DownloadsTab{
-		downloads: downloads,
+	return Tab{
+		num: 2,
+		TAB: DownloadsTab{
+			downloads: downloads,
+		},
 	}
-	return downloadsTab
 }
 
 func (tab Tab) Init() tea.Cmd {
@@ -108,7 +115,22 @@ func (tab Tab) Init() tea.Cmd {
 
 func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
-	if tab.num == 2 {
+	switch message := msg.(type) {
+	case tea.KeyMsg:
+		switch message.Type {
+		case tea.KeyShiftLeft:
+			if tab.num == 1 {
+				clearScreen()
+				return InitiateDownloadsTab(&hndlr), cmd
+			} else if tab.num == 2 {
+				clearScreen()
+				return InitiateAddDownloadTab(&hndlr), cmd
+			}
+
+		case tea.KeyShiftRight:
+		}
+	}
+	if tab.num == 1 {
 		var addDownloadTab = tab.TAB.(AddDownloadTab)
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
@@ -120,7 +142,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// We handle errors just like any other message
 		case errMsg:
 			addDownloadTab.err = msg
-			return addDownloadTab, nil
+			return tab, nil
 		}
 
 		if addDownloadTab.adm.finished {
@@ -130,11 +152,10 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					addDownloadTab.adm.finished = false
 					return InitiateAddDownloadTab(&hndlr), nil
 				} else if strings.ToLower(key)[0] == 'n' {
-					return addDownloadTab, tea.Quit
+					return tab, tea.Quit
 				}
 			}
 		} else if addDownloadTab.adm.url == "" {
-
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
@@ -143,7 +164,6 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				addDownloadTab.adm.urlInput, cmd = addDownloadTab.adm.urlInput.Update(msg)
 			}
-
 		} else if addDownloadTab.adm.selectedQueueId == "" {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
@@ -162,29 +182,24 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		} else if addDownloadTab.adm.fileName == "" {
+
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
 				case tea.KeyEnter:
 					addDownloadTab.adm.fileName = addDownloadTab.adm.fileNameInput.Value()
-
 					err := CreateDownload(addDownloadTab.adm.url, addDownloadTab.adm.selectedQueueId, addDownloadTab.adm.fileName)
 					if err != nil {
 						addDownloadTab.err = err
-						//return addDownloadTab, nil
 					}
-
 					addDownloadTab.adm.finished = true
-					return addDownloadTab, nil
+					return tab, nil
 				}
 				addDownloadTab.adm.fileNameInput, cmd = addDownloadTab.adm.fileNameInput.Update(msg)
 			}
 		}
-
-	} else if tab.num == 1 {
-
-	} else if tab.num == 3 {
-
+		tab.TAB = addDownloadTab
+		return tab, cmd
 	}
 	return tab, cmd
 }
@@ -217,8 +232,16 @@ func (tab Tab) View() string {
 				"(ctrl+c to quit)",
 			) + "\n"
 		}
+	} else if tab.num == 2 {
+		var downloadsTab = tab.TAB.(DownloadsTab)
+		for _, download := range downloadsTab.downloads {
+			queue, err := hndlr.QueueHandler.GetQueueById(download.QueueId)
+			if err != nil {
+				panic(err)
+			}
+			view = fmt.Sprintf("%v\nURL: %v    Queue: %v    Status: %v    Speed: %v", view, download.URL, queue.Name, download.Status, download.CurrentSpeed)
+		}
 	}
-
 	return view
 }
 
@@ -228,4 +251,18 @@ func CreateDownload(url, queueId, fileName string) error {
 		QueueID:  queueId,
 		FileName: fileName,
 	})
+}
+
+func clearScreen() {
+	var cmd *exec.Cmd
+	// Check the OS type and run the corresponding clear command
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("cmd", "/c", "cls") // for Windows
+	default:
+		cmd = exec.Command("clear") // for Unix-like systems (Linux, macOS)
+	}
+	// Run the clear command
+	cmd.Stdout = os.Stdout
+	cmd.Run()
 }
