@@ -42,5 +42,38 @@
       "StartTime": "0001-01-01T00:00:00Z",
       "EndTime": "0001-01-01T00:00:00Z"
     }
+  },
+  {
+    "id": "a187f448-12f2-4203-9197-fc49425f05e8",
+    "name": "souroosh",
+    "savePath": "souroosh",
+    "maximumDownloads": 4,
+    "maximumBandWidth": 34,
+    "activityInterval": {
+      "StartTime": "2025-12-12T23:00:00Z",
+      "EndTime": "2025-12-12T23:00:00Z"
+    }
+  },
+  {
+    "id": "637d9b78-f79c-481c-ab1e-f7855be20c17",
+    "name": "erfan",
+    "savePath": "erfan",
+    "maximumDownloads": 10,
+    "maximumBandWidth": 1000,
+    "activityInterval": {
+      "StartTime": "2025-12-12T08:00:00Z",
+      "EndTime": "2025-12-12T12:00:00Z"
+    }
+  },
+  {
+    "id": "f041c711-b273-460e-8a6a-e0f7dccde1ba",
+    "name": "mahdi",
+    "savePath": "mahdi",
+    "maximumDownloads": 13,
+    "maximumBandWidth": 1000,
+    "activityInterval": {
+      "StartTime": "0001-01-01T00:00:00Z",
+      "EndTime": "3000-12-30T00:00:00Z"
+    }
   }
 ]
