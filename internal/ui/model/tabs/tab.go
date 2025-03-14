@@ -173,15 +173,27 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch message.Type {
 		case tea.KeyShiftLeft:
+			if tab.num == 3 {
+				ClearScreen()
+				return InitiateDownloadsTab(&hndlr), cmd
+			} else if tab.num == 1 {
+				ClearScreen()
+				return InitiateQueuesTab(&hndlr), cmd
+			} else if tab.num == 2 {
+				ClearScreen()
+				return InitiateAddDownloadTab(&hndlr), cmd
+			}
+		case tea.KeyShiftRight:
 			if tab.num == 1 {
 				ClearScreen()
 				return InitiateDownloadsTab(&hndlr), cmd
 			} else if tab.num == 2 {
 				ClearScreen()
+				return InitiateQueuesTab(&hndlr), cmd
+			} else if tab.num == 3 {
+				ClearScreen()
 				return InitiateAddDownloadTab(&hndlr), cmd
 			}
-
-		case tea.KeyShiftRight:
 		}
 	}
 	if tab.num == 1 {
@@ -382,7 +394,7 @@ func (tab Tab) View() string {
 				}
 				view = fmt.Sprintf("%v\n%vName: %v    Save-path: %v    Maximum-concurrent-downloads: %v    Maximum-band-width: %v    Activity-interval: from %v to %v", view, cursor, queue.Name, queue.SavePath, queue.MaximumDownloads, queue.MaximumBandWidth, queue.ActivityInterval.StartTime, queue.ActivityInterval.EndTime)
 			}
-			view = fmt.Sprintf("%v\n\n(ctrl+a => pause/resume) (ctrl+s => retry) (ctrl+d => delete)", view)
+			view = fmt.Sprintf("%v\n\n(ctrl+n => create) (ctrl+e => edit) (ctrl+d => delete)", view)
 		}
 	}
 	return view
