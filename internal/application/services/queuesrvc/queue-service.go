@@ -13,8 +13,25 @@ type QueueService struct {
 }
 
 func (q QueueService) DeleteQueue(ctx context.Context, id string) (*entity.Queue, error) {
-	//TODO implement me
-	panic("implement me")
+	var (
+		queue *entity.Queue
+		err   error
+	)
+
+	queryFunc := func(r *repository.Repo) error {
+		queue, err = r.Tables.Queues.DeleteQueue(ctx, id)
+		if err != nil {
+			return fmt.Errorf("getting data from downloads: %w", err)
+		}
+		return nil
+	}
+
+	err = q.db.Query(queryFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return queue, nil
 }
 
 func NewQueueServices(db repository.Pool) QueueService {

@@ -12,8 +12,31 @@ type queueTable struct {
 }
 
 func (q queueTable) DeleteQueue(ctx context.Context, id string) (*entity.Queue, error) {
-	//TODO implement me
-	panic("implement me")
+	var queueData []entity.Queue
+	err := q.pool.loadData(q.pool.queuePath, &queueData)
+	if err != nil {
+		return nil, fmt.Errorf("can't load data from json: %w", err)
+	}
+
+	var indexToRemove int
+
+	var queue *entity.Queue
+	for i, que := range queueData {
+		if que.ID == id {
+			indexToRemove = i
+			queue = &que
+			break
+		}
+	}
+
+	queueData = append(queueData[:indexToRemove], queueData[indexToRemove+1:]...)
+
+	err = q.pool.saveData(q.pool.queuePath, queueData)
+	if err != nil {
+		return nil, fmt.Errorf("can't save data to json: %w", err)
+	}
+
+	return queue, nil
 }
 
 func newqueuesTable(p *Pool) queueTable {
