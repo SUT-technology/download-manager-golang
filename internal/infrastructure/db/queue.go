@@ -11,6 +11,11 @@ type queueTable struct {
 	pool *Pool
 }
 
+func (q queueTable) DeleteQueue(ctx context.Context, id string) (*entity.Queue, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func newqueuesTable(p *Pool) queueTable {
 	return queueTable{pool: p}
 }

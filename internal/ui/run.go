@@ -3,13 +3,10 @@ package ui
 import (
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
-	"sync"
-
-	//"github.com/SUT-technology/download-manager-golang/internal/interface/handlers/downloadHandler"
-	//"github.com/SUT-technology/download-manager-golang/internal/interface/handlers/queueHandler"
 	"github.com/SUT-technology/download-manager-golang/internal/ui/model"
 	"github.com/SUT-technology/download-manager-golang/internal/ui/model/tabs"
 	tea "github.com/charmbracelet/bubbletea"
+	"sync"
 )
 
 var Hndlr model.Handlers

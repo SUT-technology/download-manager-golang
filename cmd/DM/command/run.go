@@ -8,13 +8,13 @@ import (
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
 	"github.com/SUT-technology/download-manager-golang/internal/ui"
-	"github.com/SUT-technology/download-manager-golang/pkg/tools/slogger"
+	"github.com/SUT-technology/download-manager-golang/internal/ui/model/tabs"
 	"log/slog"
-	"os"
 	"sync"
 )
 
 func Run() error {
+	tabs.ClearScreen()
 	var configPath string
 	flag.StringVar(&configPath, "cfg", "assets/config/development.yaml", "Configuration File")
 	flag.Parse()
@@ -23,8 +23,8 @@ func Run() error {
 		return fmt.Errorf("reading config: %w", err)
 	}
 
-	logger := slogger.NewJSONLogger(c.Logger.Level, os.Stdout)
-	slog.SetDefault(logger)
+	//logger := slogger.NewJSONLogger(c.Logger.Level, os.Stdout)
+	//slog.SetDefault(logger)
 
 	db, err := db.New(c.DB)
 	if err != nil {

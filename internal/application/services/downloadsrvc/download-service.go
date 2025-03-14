@@ -69,6 +69,28 @@ func (d DownloadService) GetDownloadById(ctx context.Context, id string) (*entit
 
 	return download, nil
 }
+func (d DownloadService) DeleteDownload(ctx context.Context, id string) (*entity.Download, error) {
+	var (
+		download *entity.Download
+		err      error
+	)
+
+	queryFunc := func(r *repository.Repo) error {
+		download, err = r.Tables.Downloads.DeleteDownload(ctx, id)
+		if err != nil {
+			return fmt.Errorf("getting data from downloads: %w", err)
+		}
+
+		return nil
+	}
+
+	err = d.db.Query(queryFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return download, nil
+}
 
 func (d DownloadService) CreateDownload(ctx context.Context, Url string, queueId string, fileName string) error {
 	var (
