@@ -105,3 +105,24 @@ func (q QueueService) CreateQueue(ctx context.Context, name string, savePath str
 
 	return nil
 }
+
+func (q QueueService) FindAndUpdateQueue(ctx context.Context, id string, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) (*entity.Queue, error) {
+	var (
+		queue *entity.Queue
+		err   error
+	)
+	queryFunc := func(r *repository.Repo) error {
+		queue, err = r.Tables.Queues.FindAndUpdateQueue(ctx, id, name, savePath, maximumDownload, maximumBandWidth, activityInterval)
+		if err != nil {
+			return fmt.Errorf("getting data from downloads: %w", err)
+		}
+		return nil
+	}
+
+	err = q.db.Query(queryFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return queue, nil
+}

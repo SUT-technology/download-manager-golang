@@ -62,6 +62,19 @@ func (h QueueHndlr) DeleteQueue(id string) (*entity.Queue, error) {
 	return queue, nil
 }
 
+func (h QueueHndlr) FindAndUpdateQueue(id string, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) (*entity.Queue, error) {
+	ctx := context.Background()
+	slogger.Debug(ctx, "recieve request", slog.Any("queue id", id))
+
+	queue, err := h.Services.QueueSrvc.FindAndUpdateQueue(ctx, id, name, savePath, maximumDownload, maximumBandWidth, activityInterval)
+	if err != nil {
+		slogger.Debug(ctx, "find and update by id", slog.Any("queue id", id), slogger.Err("error", err))
+		return nil, fmt.Errorf("get queue: %w", err)
+	}
+
+	return queue, nil
+}
+
 func (h QueueHndlr) CreateQueue(queueDto dto.QueueDto) error {
 	ctx := context.Background()
 

@@ -10,4 +10,5 @@ type QueueService interface {
 	GetQueueById(ctx context.Context, id string) (*entity.Queue, error)
 	CreateQueue(ctx context.Context, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) error
 	DeleteQueue(ctx context.Context, id string) (*entity.Queue, error)
+	FindAndUpdateQueue(ctx context.Context, id string, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) (*entity.Queue, error)
 }

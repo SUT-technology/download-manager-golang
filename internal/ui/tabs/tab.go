@@ -2,23 +2,13 @@ package tabs
 
 import (
 	"fmt"
-	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbletea"
-	"os"
-	"os/exec"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
 )
-
-type (
-	errMsg error
-)
-
-var hndlr Handlers
 
 func (tab Tab) Init() tea.Cmd {
 	return textinput.Blink
@@ -184,10 +174,13 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					queuesTab.cursorIndex = (queuesTab.cursorIndex + 1) % len(queuesTab.queues)
 				case tea.KeyCtrlD:
 					queuesTab.action = "new"
-				case tea.KeyCtrlE:
+				case tea.KeyCtrlW:
 					queuesTab.action = "edit"
 				case tea.KeyCtrlQ:
 					queue, err := hndlr.QueueHandler.DeleteQueue(queuesTab.queues[queuesTab.cursorIndex].ID)
+					if err != nil {
+						panic(err)
+					}
 					// TEMPORARY - shall be handled in the database layers
 					downloads, err := hndlr.DownloadHandler.GetDownloads()
 					for _, download := range downloads {
@@ -195,14 +188,148 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							hndlr.DownloadHandler.DeleteDownload(download.ID)
 						}
 					}
-					if err != nil {
-						panic(err)
-					}
 					queuesTab.action = "finishedDeleting"
 				}
 			}
 		} else if queuesTab.action == "edit" {
-
+			queue := queuesTab.queues[queuesTab.cursorIndex]
+			queuesTab.id = queue.ID
+			queuesTab.nameInput.Placeholder = queue.Name
+			queuesTab.savePathInput.Placeholder = queue.SavePath
+			queuesTab.maximumDownloadsInput.Placeholder = fmt.Sprintf("%v", queue.MaximumDownloads)
+			queuesTab.maximumBandWidthInput.Placeholder = fmt.Sprintf("%v", queue.MaximumBandWidth)
+			var temp1 = fmt.Sprintf("%v", queue.ActivityInterval.StartTime.Format("2006-02-01 15:04"))
+			if temp1 != "0001-01-01 00:00" {
+				queuesTab.startTimeInput.Placeholder = fmt.Sprintf("%v", queue.ActivityInterval.StartTime.Format("2006-02-01 15:04"))
+			} else {
+				queuesTab.startTimeInput.Placeholder = " "
+			}
+			var temp2 = fmt.Sprintf("%v", queue.ActivityInterval.EndTime.Format("2006-02-01 15:04"))
+			if temp2 != "9999-12-30 23:59" {
+				queuesTab.endTimeInput.Placeholder = fmt.Sprintf("%v", queue.ActivityInterval.EndTime.Format("2006-02-01 15:04"))
+			} else {
+				queuesTab.endTimeInput.Placeholder = " "
+			}
+			if queuesTab.name == "" {
+				switch msg := msg.(type) {
+				case tea.KeyMsg:
+					switch msg.Type {
+					case tea.KeyEnter:
+						if queuesTab.nameInput.Value() != "" {
+							queuesTab.name = queuesTab.nameInput.Value()
+						} else {
+							queuesTab.name = queuesTab.nameInput.Placeholder
+						}
+					}
+					queuesTab.nameInput, cmd = queuesTab.nameInput.Update(msg)
+				}
+			} else if queuesTab.savePath == "" {
+				switch msg := msg.(type) {
+				case tea.KeyMsg:
+					switch msg.Type {
+					case tea.KeyEnter:
+						if queuesTab.savePathInput.Value() != "" {
+							queuesTab.savePath = queuesTab.savePathInput.Value()
+						} else {
+							queuesTab.savePath = queuesTab.savePathInput.Placeholder
+						}
+					}
+					queuesTab.savePathInput, cmd = queuesTab.savePathInput.Update(msg)
+				}
+			} else if queuesTab.maximumDownloads == 0 {
+				switch msg := msg.(type) {
+				case tea.KeyMsg:
+					switch msg.Type {
+					case tea.KeyEnter:
+						if queuesTab.maximumDownloadsInput.Value() != "" {
+							maximumDownloads, err := strconv.Atoi(queuesTab.maximumDownloadsInput.Value())
+							if err != nil {
+								queuesTab.maximumDownloadsInput.Reset()
+							}
+							queuesTab.maximumDownloads = maximumDownloads
+						} else {
+							queuesTab.maximumDownloads, _ = strconv.Atoi(queuesTab.maximumDownloadsInput.Placeholder)
+						}
+					}
+					queuesTab.maximumDownloadsInput, cmd = queuesTab.maximumDownloadsInput.Update(msg)
+				}
+			} else if queuesTab.maximumBandWidth == 0 {
+				switch msg := msg.(type) {
+				case tea.KeyMsg:
+					switch msg.Type {
+					case tea.KeyEnter:
+						if queuesTab.maximumBandWidthInput.Value() != "" {
+							maximumBandWidth, err := strconv.ParseFloat(queuesTab.maximumBandWidthInput.Value(), 64)
+							if err != nil {
+								queuesTab.maximumBandWidthInput.Reset()
+							}
+							queuesTab.maximumBandWidth = maximumBandWidth
+						} else {
+							queuesTab.maximumBandWidth, _ = strconv.ParseFloat(queuesTab.maximumBandWidthInput.Placeholder, 64)
+						}
+					}
+					queuesTab.maximumBandWidthInput, cmd = queuesTab.maximumBandWidthInput.Update(msg)
+				}
+			} else if queuesTab.startTime == "" {
+				switch msg := msg.(type) {
+				case tea.KeyMsg:
+					switch msg.Type {
+					case tea.KeyEnter:
+						if queuesTab.startTimeInput.Value() != "" {
+							_, err := time.Parse("2006-02-01 15:04", queuesTab.startTimeInput.Value())
+							if err != nil {
+								queuesTab.startTimeInput.Reset()
+							}
+							queuesTab.startTime = queuesTab.startTimeInput.Value()
+						} else {
+							queuesTab.startTime = queuesTab.startTimeInput.Placeholder
+						}
+					}
+					queuesTab.startTimeInput, cmd = queuesTab.startTimeInput.Update(msg)
+				}
+			} else if queuesTab.endTime == "" {
+				switch msg := msg.(type) {
+				case tea.KeyMsg:
+					switch msg.Type {
+					case tea.KeyEnter:
+						if queuesTab.endTimeInput.Value() != "" {
+							_, err := time.Parse("2006-02-01 15:04", queuesTab.endTimeInput.Value())
+							if err != nil {
+								queuesTab.endTimeInput.Reset()
+							}
+							queuesTab.endTime = queuesTab.endTimeInput.Value()
+						} else {
+							queuesTab.endTime = queuesTab.startTimeInput.Placeholder
+						}
+						var date entity.TimeInterval
+						if queuesTab.startTime == " " {
+							date.StartTime, _ = time.Parse("2006-02-01 15:04", "0001-01-01 00:00")
+						} else {
+							startTime, err := time.Parse("2006-02-01 15:04", queuesTab.startTime)
+							if err != nil {
+								panic(err)
+							}
+							date.StartTime = startTime
+						}
+						if queuesTab.endTime == " " {
+							date.EndTime, _ = time.Parse("2006-02-01 15:04", "9999-30-12 23:59")
+						} else {
+							endTime, err := time.Parse("2006-02-01 15:04", queuesTab.endTime)
+							if err != nil {
+								panic(err)
+							}
+							date.EndTime = endTime
+						}
+						queue.ActivityInterval = date
+						_, err := hndlr.QueueHandler.FindAndUpdateQueue(queue.ID, queuesTab.name, queuesTab.savePath, queuesTab.maximumDownloads, queuesTab.maximumBandWidth, date)
+						if err != nil {
+							queuesTab.err = err
+						}
+						queuesTab.action = "finishedEditing"
+					}
+					queuesTab.endTimeInput, cmd = queuesTab.endTimeInput.Update(msg)
+				}
+			}
 		} else if queuesTab.action == "new" {
 			if queuesTab.name == "" {
 				switch msg := msg.(type) {
@@ -254,7 +381,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.startTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.startTimeInput.Value()[:16])
+							_, err := time.Parse("2006-02-01 15:04", queuesTab.startTimeInput.Value())
 							if err != nil {
 								queuesTab.startTimeInput.Reset()
 							}
@@ -262,7 +389,6 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							queuesTab.startTime = " "
 						}
-
 					}
 					queuesTab.startTimeInput, cmd = queuesTab.startTimeInput.Update(msg)
 				}
@@ -272,7 +398,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.endTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.endTimeInput.Value()[:16])
+							_, err := time.Parse("2006-02-01 15:04", queuesTab.endTimeInput.Value())
 							if err != nil {
 								queuesTab.endTimeInput.Reset()
 							}
@@ -373,7 +499,7 @@ func (tab Tab) View() string {
 			view = fmt.Sprintf("%v\n\n(ctrl+a => pause/resume) (ctrl+s => retry) (ctrl+d => delete) (ctrl+c => quit)", view)
 		}
 		if downloadsTab.deleteAction {
-			view = fmt.Sprintf("%v\n%v\n%v", view, downloadsTab.message, "do you want to continue? (y => yes) (n => no) (ctrl+c => quit)")
+			view = fmt.Sprintf("%v\n%v\n%v", view, downloadsTab.message, "do you want to continue? (y => yes) (n => no)")
 		}
 	} else if tab.num == 3 {
 		var queuesTab = tab.TAB.(QueuesTab)
@@ -387,8 +513,8 @@ func (tab Tab) View() string {
 				}
 				view = fmt.Sprintf("%v\n%vName: %v    Save-path: %v    Maximum-concurrent-downloads: %v    Maximum-band-width: %vKB/s    Activity-interval: from %v to %v", view, cursor, queue.Name, queue.SavePath, queue.MaximumDownloads, queue.MaximumBandWidth, queue.ActivityInterval.StartTime.Format("2006-01-02 15:04"), queue.ActivityInterval.EndTime.Format("2006-01-02 15:04"))
 			}
-			view = fmt.Sprintf("%v\n\n(ctrl+d => create) (ctrl+e => edit) (ctrl+a => delete) (ctrl+c => quit)", view)
-		} else if queuesTab.action == "new" {
+			view = fmt.Sprintf("%v\n\n(ctrl+d => create) (ctrl+w => edit) (ctrl+q => delete) (ctrl+c => quit)", view)
+		} else if queuesTab.action == "new" || queuesTab.action == "edit" {
 			if queuesTab.name == "" {
 				view += fmt.Sprintf(
 					"\nEnter the name of queue here:\n\n%s\n\n%s",
@@ -421,7 +547,7 @@ func (tab Tab) View() string {
 				) + "\n"
 			} else if queuesTab.endTime == "" {
 				view += fmt.Sprintf(
-					"\nEnter the end time of the queue here with format \"yy-dd-MM hh:mm\" (optional):\n\n%s\n\n%s",
+					"\nEnter the end time of the queue here with format \"yyyy-dd-MM hh:mm\" (optional):\n\n%s\n\n%s",
 					queuesTab.endTimeInput.View(),
 					"(ctrl+c => quit)",
 				) + "\n"
@@ -436,40 +562,8 @@ func (tab Tab) View() string {
 			} else if condition == "Deleting" {
 				addition = "Queue deleted successfully"
 			}
-			view += fmt.Sprintf("\n%v\n\nDo you want to continue? (y => yes) (n => no) (ctrl+c => quit)", addition)
+			view += fmt.Sprintf("\n%v\n\nDo you want to continue? (y => yes) (n => no)", addition)
 		}
 	}
 	return view
-}
-
-func CreateDownload(url, queueId, fileName string) error {
-	return hndlr.DownloadHandler.CreateDownload(dto.DownloadDto{
-		URL:      url,
-		QueueID:  queueId,
-		FileName: fileName,
-	})
-}
-
-func CreateQueue(name string, savePath string, maximumDownloads int, maximumBandWidth float64, activityInterval entity.TimeInterval) error {
-	return hndlr.QueueHandler.CreateQueue(dto.QueueDto{
-		Name:             name,
-		SavePath:         savePath,
-		MaximumDownloads: maximumDownloads,
-		MaximumBandWidth: maximumBandWidth,
-		ActivityInterval: activityInterval,
-	})
-}
-
-func ClearScreen() {
-	var cmd *exec.Cmd
-	// Check the OS type and run the corresponding clear command
-	switch runtime.GOOS {
-	case "windows":
-		cmd = exec.Command("cmd", "/c", "cls") // for Windows
-	default:
-		cmd = exec.Command("clear") // for Unix-like systems (Linux, macOS)
-	}
-	// Run the clear command
-	cmd.Stdout = os.Stdout
-	cmd.Run()
 }
