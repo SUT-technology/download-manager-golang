@@ -80,7 +80,6 @@ func (d DownloadService) DeleteDownload(ctx context.Context, id string) (*entity
 		if err != nil {
 			return fmt.Errorf("getting data from downloads: %w", err)
 		}
-
 		return nil
 	}
 

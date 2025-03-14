@@ -184,16 +184,23 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					queuesTab.cursorIndex = (queuesTab.cursorIndex + 1) % len(queuesTab.queues)
 				case tea.KeyCtrlD:
 					queuesTab.action = "new"
-					tab.TAB = queuesTab
-					return tab, nil
 				case tea.KeyCtrlE:
 					queuesTab.action = "edit"
-				case tea.KeyCtrlA:
-					queuesTab.action = "delete"
+				case tea.KeyCtrlQ:
+					queue, err := hndlr.QueueHandler.DeleteQueue(queuesTab.queues[queuesTab.cursorIndex].ID)
+					// TEMPORARY - shall be handled in the database layers
+					downloads, err := hndlr.DownloadHandler.GetDownloads()
+					for _, download := range downloads {
+						if download.QueueId == queue.ID {
+							hndlr.DownloadHandler.DeleteDownload(download.ID)
+						}
+					}
+					if err != nil {
+						panic(err)
+					}
+					queuesTab.action = "finishedDeleting"
 				}
 			}
-		} else if queuesTab.action == "delete" {
-
 		} else if queuesTab.action == "edit" {
 
 		} else if queuesTab.action == "new" {
@@ -351,7 +358,7 @@ func (tab Tab) View() string {
 		var downloadsTab = tab.TAB.(DownloadsTab)
 		view = "                   ----------------------------------------------------------- Downloads Tab -----------------------------------------------------------"
 		if !downloadsTab.deleteAction {
-			view = fmt.Sprintf("%v\nSelect a queue:", view)
+			view = fmt.Sprintf("%v\nSelect a download:", view)
 			for i, download := range downloadsTab.downloads {
 				queue, err := hndlr.QueueHandler.GetQueueById(download.QueueId)
 				if err != nil {

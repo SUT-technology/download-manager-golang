@@ -65,7 +65,6 @@ func (h DownloadHndlr) DeleteDownload(id string) (*entity.Download, error) {
 	return download, nil
 }
 
-// TODO: change outputs
 func (h DownloadHndlr) CreateDownload(downloadDto dto.DownloadDto) error {
 	ctx := context.Background()
 

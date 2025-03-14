@@ -49,6 +49,19 @@ func (h QueueHndlr) GetQueueById(id string) (*entity.Queue, error) {
 	return queue, nil
 }
 
+func (h QueueHndlr) DeleteQueue(id string) (*entity.Queue, error) {
+	ctx := context.Background()
+	slogger.Debug(ctx, "recieve request", slog.Any("queue id", id))
+
+	queue, err := h.Services.QueueSrvc.DeleteQueue(ctx, id)
+	if err != nil {
+		slogger.Debug(ctx, "delete queue by id", slog.Any("queue id", id), slogger.Err("error", err))
+		return nil, fmt.Errorf("get queue: %w", err)
+	}
+
+	return queue, nil
+}
+
 func (h QueueHndlr) CreateQueue(queueDto dto.QueueDto) error {
 	ctx := context.Background()
 
