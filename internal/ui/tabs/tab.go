@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
-	"github.com/SUT-technology/download-manager-golang/internal/ui/model"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"os"
 	"os/exec"
 	"runtime"
@@ -20,171 +18,7 @@ type (
 	errMsg error
 )
 
-type Tab struct {
-	num int
-	TAB interface{}
-}
-
-type AddDownloadTab struct {
-	downloads       []entity.Download
-	queues          []entity.Queue
-	url             string
-	urlInput        textinput.Model
-	selectedQueueId string
-	fileName        string
-	fileNameInput   textinput.Model
-	cursorIndex     int
-	finished        bool
-	err             error
-}
-
-func InitiateAddDownloadTab(Hndlr *model.Handlers) Tab {
-
-	hndlr = *Hndlr
-
-	uInp := textinput.New()
-	uInp.Placeholder = "url"
-	uInp.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	uInp.Focus()
-	uInp.Width = 100
-
-	downloads, err := hndlr.DownloadHandler.GetDownloads()
-	//Todo fix err
-	if err != nil {
-		panic(err)
-	}
-
-	queues, err := hndlr.QueueHandler.GetQueues()
-	//Todo fix err
-	if err != nil {
-		panic(err)
-	}
-
-	fInp := textinput.New()
-	fInp.Placeholder = "Pikachu"
-	fInp.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	fInp.Focus()
-	fInp.Width = 100
-
-	return Tab{
-		num: 1,
-		TAB: AddDownloadTab{
-			downloads:       downloads,
-			queues:          queues,
-			url:             "",
-			urlInput:        uInp,
-			selectedQueueId: "",
-			fileName:        "",
-			fileNameInput:   fInp,
-			cursorIndex:     0,
-			finished:        false,
-		},
-	}
-}
-
-type DownloadsTab struct {
-	downloads    []entity.Download
-	cursorIndex  int
-	deleteAction bool
-	message      string
-}
-
-func InitiateDownloadsTab(Hndlr *model.Handlers) Tab {
-	hndlr = *Hndlr
-	downloads, err := hndlr.DownloadHandler.GetDownloads()
-	if err != nil {
-		panic(err)
-	}
-	return Tab{
-		num: 2,
-		TAB: DownloadsTab{
-			downloads:    downloads,
-			cursorIndex:  0,
-			deleteAction: false,
-		},
-	}
-}
-
-type QueuesTab struct {
-	queues                []entity.Queue
-	cursorIndex           int
-	action                string
-	nameInput             textinput.Model
-	savePathInput         textinput.Model
-	maximumDownloadsInput textinput.Model
-	maximumBandWidthInput textinput.Model
-	startTimeInput        textinput.Model
-	endTimeInput          textinput.Model
-	name                  string
-	savePath              string
-	maximumDownloads      int
-	maximumBandWidth      float64
-	startTime             string
-	endTime               string
-	message               string
-	err                   error
-}
-
-func InitiateQueuesTab(Hndlr *model.Handlers) Tab {
-	hndlr = *Hndlr
-
-	nameInput := textinput.New()
-	nameInput.Placeholder = ""
-	nameInput.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	nameInput.Focus()
-	nameInput.Width = 100
-
-	savePathInput := textinput.New()
-	savePathInput.Placeholder = ""
-	savePathInput.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	savePathInput.Focus()
-	savePathInput.Width = 100
-
-	maximumDownloadsInput := textinput.New()
-	maximumDownloadsInput.Placeholder = ""
-	maximumDownloadsInput.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	maximumDownloadsInput.Focus()
-	maximumDownloadsInput.Width = 100
-
-	maximumBandWidthInput := textinput.New()
-	maximumBandWidthInput.Placeholder = ""
-	maximumBandWidthInput.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	maximumBandWidthInput.Focus()
-	maximumBandWidthInput.Width = 100
-
-	startTimeInput := textinput.New()
-	startTimeInput.Placeholder = ""
-	startTimeInput.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	startTimeInput.Focus()
-	startTimeInput.Width = 100
-
-	endTimeInput := textinput.New()
-	endTimeInput.Placeholder = ""
-	endTimeInput.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
-	endTimeInput.Focus()
-	endTimeInput.Width = 100
-
-	queues, err := hndlr.QueueHandler.GetQueues()
-	if err != nil {
-		panic(err)
-	}
-	return Tab{
-		num: 3,
-		TAB: QueuesTab{
-			queues:                queues,
-			cursorIndex:           0,
-			action:                "list",
-			nameInput:             nameInput,
-			savePathInput:         savePathInput,
-			maximumDownloadsInput: maximumDownloadsInput,
-			maximumBandWidthInput: maximumBandWidthInput,
-			startTimeInput:        startTimeInput,
-			endTimeInput:          endTimeInput,
-		},
-	}
-}
-
-var hndlr model.Handlers
+var hndlr Handlers
 
 func (tab Tab) Init() tea.Cmd {
 	return textinput.Blink
@@ -197,7 +31,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// general key listeners: shifting between tabs and quit
 	case tea.KeyMsg:
 		switch message.Type {
-		case tea.KeyShiftLeft:
+		case tea.KeyLeft:
 			if tab.num == 3 {
 				ClearScreen()
 				return InitiateDownloadsTab(&hndlr), cmd
@@ -208,7 +42,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				ClearScreen()
 				return InitiateAddDownloadTab(&hndlr), cmd
 			}
-		case tea.KeyShiftRight:
+		case tea.KeyRight:
 			if tab.num == 1 {
 				ClearScreen()
 				return InitiateDownloadsTab(&hndlr), cmd

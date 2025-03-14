@@ -1,4 +1,4 @@
-package model
+package tabs
 
 import (
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers/downloadHandler"
