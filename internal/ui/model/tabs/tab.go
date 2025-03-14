@@ -413,7 +413,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.startTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.startTimeInput.Value())
+							_, err := time.Parse("2006-02-01 15:04", queuesTab.startTimeInput.Value()[:16])
 							if err != nil {
 								queuesTab.startTimeInput.Reset()
 							}
@@ -431,7 +431,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.endTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.endTimeInput.Value())
+							_, err := time.Parse("2006-02-01 15:04", queuesTab.endTimeInput.Value()[:16])
 							if err != nil {
 								queuesTab.endTimeInput.Reset()
 							}
@@ -450,7 +450,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							date.StartTime = startTime
 						}
 						if queuesTab.endTime == " " {
-							date.EndTime, _ = time.Parse("2006-02-01 15:04", "3000-30-12 00:00")
+							date.EndTime, _ = time.Parse("2006-02-01 15:04", "9999-30-12 23:59")
 						} else {
 							endTime, err := time.Parse("2006-02-01 15:04", queuesTab.endTime)
 							if err != nil {
