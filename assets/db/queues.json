@@ -46,7 +46,7 @@
   {
     "id": "a187f448-12f2-4203-9197-fc49425f05e8",
     "name": "souroosh",
-    "savePath": "souroosh",
+    "savePath": "tmp/souroosh",
     "maximumDownloads": 4,
     "maximumBandWidth": 34,
     "activityInterval": {

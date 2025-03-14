@@ -3,19 +3,18 @@ package ui
 import (
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
-	"github.com/SUT-technology/download-manager-golang/internal/ui/model"
-	"github.com/SUT-technology/download-manager-golang/internal/ui/model/tabs"
+	"github.com/SUT-technology/download-manager-golang/internal/ui/tabs"
 	tea "github.com/charmbracelet/bubbletea"
 	"sync"
 )
 
-var Hndlr model.Handlers
+var Hndlr tabs.Handlers
 
 func Run(wg *sync.WaitGroup, srcv *handlers.HandlerSrcv) error {
 	//wg.Add(1)
 	defer wg.Done()
 
-	Hndlr = model.Handlers{
+	Hndlr = tabs.Handlers{
 		DownloadHandler: &srcv.DownloadHndlr,
 		QueueHandler:    &srcv.QueueHndlr,
 	}
