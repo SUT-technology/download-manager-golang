@@ -24,21 +24,8 @@ type Tab struct {
 }
 
 type AddDownloadTab struct {
-	downloads []entity.Download
-	queues    []entity.Queue
-	adm       addDownloadModel
-	err       error
-}
-
-type DownloadsTab struct {
-	downloads []entity.Download
-}
-
-type queuesTableTab struct {
-	queues []entity.Queue
-}
-
-type addDownloadModel struct {
+	downloads       []entity.Download
+	queues          []entity.Queue
 	url             string
 	urlInput        textinput.Model
 	selectedQueueId string
@@ -46,6 +33,25 @@ type addDownloadModel struct {
 	fileNameInput   textinput.Model
 	cursorIndex     int
 	finished        bool
+	err             error
+}
+
+type DownloadsTab struct {
+	downloads    []entity.Download
+	cursorIndex  int
+	deleteAction bool
+	message      string
+}
+
+type QueuesTab struct {
+	downloads    []entity.Download
+	cursorIndex  int
+	deleteAction bool
+	message      string
+}
+
+type queuesTableTab struct {
+	queues []entity.Queue
 }
 
 var hndlr model.Handlers
@@ -81,17 +87,16 @@ func InitiateAddDownloadTab(Hndlr *model.Handlers) Tab {
 	return Tab{
 		num: 1,
 		TAB: AddDownloadTab{
-			downloads: downloads,
-			queues:    queues,
-			adm: addDownloadModel{
-				url:             "",
-				urlInput:        uInp,
-				selectedQueueId: "",
-				fileName:        "",
-				fileNameInput:   fInp,
-				cursorIndex:     0,
-				finished:        false,
-			}},
+			downloads:       downloads,
+			queues:          queues,
+			url:             "",
+			urlInput:        uInp,
+			selectedQueueId: "",
+			fileName:        "",
+			fileNameInput:   fInp,
+			cursorIndex:     0,
+			finished:        false,
+		},
 	}
 }
 
@@ -104,7 +109,9 @@ func InitiateDownloadsTab(Hndlr *model.Handlers) Tab {
 	return Tab{
 		num: 2,
 		TAB: DownloadsTab{
-			downloads: downloads,
+			downloads:    downloads,
+			cursorIndex:  0,
+			deleteAction: false,
 		},
 	}
 }
@@ -118,16 +125,14 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch message := msg.(type) {
 	case tea.KeyMsg:
 		switch message.Type {
-		case tea.KeyShiftLeft:
-			if tab.num == 1 {
-				clearScreen()
-				return InitiateDownloadsTab(&hndlr), cmd
-			} else if tab.num == 2 {
-				clearScreen()
-				return InitiateAddDownloadTab(&hndlr), cmd
-			}
-
-		case tea.KeyShiftRight:
+		case tea.KeyF1:
+			ClearScreen()
+			return InitiateDownloadsTab(&hndlr), cmd
+		case tea.KeyF2:
+			ClearScreen()
+			return InitiateAddDownloadTab(&hndlr), cmd
+		case tea.KeyF3:
+			ClearScreen()
 		}
 	}
 	if tab.num == 1 {
@@ -145,60 +150,99 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return tab, nil
 		}
 
-		if addDownloadTab.adm.finished {
+		if addDownloadTab.finished {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				if key := msg.String(); strings.ToLower(key)[0] == 'y' {
-					addDownloadTab.adm.finished = false
+					addDownloadTab.finished = false
 					return InitiateAddDownloadTab(&hndlr), nil
 				} else if strings.ToLower(key)[0] == 'n' {
 					return tab, tea.Quit
 				}
 			}
-		} else if addDownloadTab.adm.url == "" {
+		} else if addDownloadTab.url == "" {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
 				case tea.KeyEnter:
-					addDownloadTab.adm.url = addDownloadTab.adm.urlInput.Value()
+					addDownloadTab.url = addDownloadTab.urlInput.Value()
 				}
-				addDownloadTab.adm.urlInput, cmd = addDownloadTab.adm.urlInput.Update(msg)
+				addDownloadTab.urlInput, cmd = addDownloadTab.urlInput.Update(msg)
 			}
-		} else if addDownloadTab.adm.selectedQueueId == "" {
+		} else if addDownloadTab.selectedQueueId == "" {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
 				case tea.KeyUp:
-					if addDownloadTab.adm.cursorIndex == 0 {
-						addDownloadTab.adm.cursorIndex = len(addDownloadTab.queues) - 1
+					if addDownloadTab.cursorIndex == 0 {
+						addDownloadTab.cursorIndex = len(addDownloadTab.queues) - 1
 					} else {
-						addDownloadTab.adm.cursorIndex--
+						addDownloadTab.cursorIndex--
 					}
 				case tea.KeyDown:
-					addDownloadTab.adm.cursorIndex = (addDownloadTab.adm.cursorIndex + 1) % len(addDownloadTab.queues)
+					addDownloadTab.cursorIndex = (addDownloadTab.cursorIndex + 1) % len(addDownloadTab.queues)
 				case tea.KeyEnter:
-					addDownloadTab.adm.selectedQueueId = addDownloadTab.queues[addDownloadTab.adm.cursorIndex].ID
+					addDownloadTab.selectedQueueId = addDownloadTab.queues[addDownloadTab.cursorIndex].ID
 				}
 			}
-
-		} else if addDownloadTab.adm.fileName == "" {
-
+		} else if addDownloadTab.fileName == "" {
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
 				case tea.KeyEnter:
-					addDownloadTab.adm.fileName = addDownloadTab.adm.fileNameInput.Value()
-					err := CreateDownload(addDownloadTab.adm.url, addDownloadTab.adm.selectedQueueId, addDownloadTab.adm.fileName)
+					addDownloadTab.fileName = addDownloadTab.fileNameInput.Value()
+					err := CreateDownload(addDownloadTab.url, addDownloadTab.selectedQueueId, addDownloadTab.fileName)
 					if err != nil {
 						addDownloadTab.err = err
 					}
-					addDownloadTab.adm.finished = true
+					addDownloadTab.finished = true
+					tab.TAB = addDownloadTab
 					return tab, nil
 				}
-				addDownloadTab.adm.fileNameInput, cmd = addDownloadTab.adm.fileNameInput.Update(msg)
+				addDownloadTab.fileNameInput, cmd = addDownloadTab.fileNameInput.Update(msg)
 			}
 		}
 		tab.TAB = addDownloadTab
+		return tab, cmd
+	} else if tab.num == 2 {
+		downloadsTab := tab.TAB.(DownloadsTab)
+		if !downloadsTab.deleteAction {
+			switch msg := msg.(type) {
+			case tea.KeyMsg:
+				switch msg.Type {
+				case tea.KeyUp:
+					if downloadsTab.cursorIndex == 0 {
+						downloadsTab.cursorIndex = len(downloadsTab.downloads) - 1
+					} else {
+						downloadsTab.cursorIndex--
+					}
+				case tea.KeyDown:
+					downloadsTab.cursorIndex = (downloadsTab.cursorIndex + 1) % len(downloadsTab.downloads)
+				case tea.KeyCtrlA:
+				//TODO: pause/resume
+				case tea.KeyCtrlS:
+				//TODO: retry
+				case tea.KeyCtrlD:
+					download, err := hndlr.DownloadHandler.DeleteDownload(downloadsTab.downloads[downloadsTab.cursorIndex].ID)
+					if err != nil {
+						panic(err)
+					}
+					downloadsTab.message = fmt.Sprintf("%s deleted successfully", download.FileName)
+					downloadsTab.deleteAction = true
+				}
+			}
+		} else {
+			switch msg := msg.(type) {
+			case tea.KeyMsg:
+				if key := msg.String(); strings.ToLower(key)[0] == 'y' {
+					downloadsTab.deleteAction = false
+					return InitiateDownloadsTab(&hndlr), nil
+				} else if strings.ToLower(key)[0] == 'n' {
+					return tab, tea.Quit
+				}
+			}
+		}
+		tab.TAB = downloadsTab
 		return tab, cmd
 	}
 	return tab, cmd
@@ -207,39 +251,52 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (tab Tab) View() string {
 	var view string
 	if tab.num == 1 {
+		view = "                   ------------------------ Add Download Tab ------------------------"
 		var addDownloadTab = tab.TAB.(AddDownloadTab)
-		if addDownloadTab.adm.finished {
-			view = "Download added successfully!\n\nDo you want to continue? (y/n)"
-		} else if addDownloadTab.adm.url == "" {
-			view = fmt.Sprintf(
+		if addDownloadTab.finished {
+			view += "\nDownload added successfully!\n\nDo you want to continue? (y => yes) (n => no)"
+		} else if addDownloadTab.url == "" {
+			view += fmt.Sprintf(
 				"\nEnter the url here:\n\n%s\n\n%s",
-				addDownloadTab.adm.urlInput.View(),
+				addDownloadTab.urlInput.View(),
 				"(ctrl+c to quit)",
 			) + "\n"
-		} else if addDownloadTab.adm.selectedQueueId == "" {
-			view = "\nSelect a queue:\n\n"
+		} else if addDownloadTab.selectedQueueId == "" {
+			view += "\nSelect a queue:\n\n"
 			for i, queue := range addDownloadTab.queues {
-				cursor := " "
-				if i == addDownloadTab.adm.cursorIndex {
-					cursor = ">"
+				cursor := "  "
+				if i == addDownloadTab.cursorIndex {
+					cursor = "> "
 				}
-				view += fmt.Sprintf("%s %s\n", cursor, queue.Name)
+				view += fmt.Sprintf("%s%s\n", cursor, queue.Name)
 			}
-		} else if addDownloadTab.adm.fileName == "" {
-			view = fmt.Sprintf(
+		} else if addDownloadTab.fileName == "" {
+			view += fmt.Sprintf(
 				"\nEnter the file name here (optional):\n\n%s\n\n%s",
-				addDownloadTab.adm.fileNameInput.View(),
-				"(ctrl+c to quit)",
+				addDownloadTab.fileNameInput.View(),
+				"(ctrl+c => quit)",
 			) + "\n"
 		}
 	} else if tab.num == 2 {
 		var downloadsTab = tab.TAB.(DownloadsTab)
-		for _, download := range downloadsTab.downloads {
-			queue, err := hndlr.QueueHandler.GetQueueById(download.QueueId)
-			if err != nil {
-				panic(err)
+		view = "                   ------------------------ Downloads Tab ------------------------"
+		if !downloadsTab.deleteAction {
+			view = fmt.Sprintf("%v\nSelect a queue:", view)
+			for i, download := range downloadsTab.downloads {
+				queue, err := hndlr.QueueHandler.GetQueueById(download.QueueId)
+				if err != nil {
+					panic(err)
+				}
+				cursor := "  "
+				if i == downloadsTab.cursorIndex {
+					cursor = "> "
+				}
+				view = fmt.Sprintf("%v\n%vURL: %v    Queue: %v    Status: %v    Speed: %v    Progress: %v", view, cursor, download.URL, queue.Name, download.Status, download.CurrentSpeed, download.Progress)
 			}
-			view = fmt.Sprintf("%v\nURL: %v    Queue: %v    Status: %v    Speed: %v", view, download.URL, queue.Name, download.Status, download.CurrentSpeed)
+			view = fmt.Sprintf("%v\n\n(ctrl+a => pause/resume) (ctrl+s => retry) (ctrl+d => delete)", view)
+		}
+		if downloadsTab.deleteAction {
+			view = fmt.Sprintf("%v\n%v\n%v", view, downloadsTab.message, "do you want to continue? (y => yes) (n => no)")
 		}
 	}
 	return view
@@ -253,7 +310,7 @@ func CreateDownload(url, queueId, fileName string) error {
 	})
 }
 
-func clearScreen() {
+func ClearScreen() {
 	var cmd *exec.Cmd
 	// Check the OS type and run the corresponding clear command
 	switch runtime.GOOS {

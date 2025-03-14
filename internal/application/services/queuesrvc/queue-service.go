@@ -12,6 +12,11 @@ type QueueService struct {
 	db repository.Pool
 }
 
+func (q QueueService) DeleteQueue(ctx context.Context, id string) (*entity.Queue, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewQueueServices(db repository.Pool) QueueService {
 	return QueueService{db: db}
 }

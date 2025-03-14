@@ -52,6 +52,19 @@ func (h DownloadHndlr) GetDownloadById(id string) (*entity.Download, error) {
 	return download, nil
 }
 
+func (h DownloadHndlr) DeleteDownload(id string) (*entity.Download, error) {
+	ctx := context.Background()
+	slogger.Debug(ctx, "recieve request", slog.Any("download id", id))
+
+	download, err := h.Services.DownloadSrvc.DeleteDownload(ctx, id)
+	if err != nil {
+		slogger.Debug(ctx, "delete download by id", slog.Any("download id", id), slogger.Err("error", err))
+		return nil, fmt.Errorf("get download: %w", err)
+	}
+
+	return download, nil
+}
+
 // TODO: change outputs
 func (h DownloadHndlr) CreateDownload(downloadDto dto.DownloadDto) error {
 	ctx := context.Background()
