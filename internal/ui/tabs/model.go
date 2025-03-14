@@ -5,6 +5,12 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 )
 
+type (
+	errMsg error
+)
+
+var hndlr Handlers
+
 type Tab struct {
 	num int
 	TAB interface{}
@@ -40,6 +46,7 @@ type QueuesTab struct {
 	maximumBandWidthInput textinput.Model
 	startTimeInput        textinput.Model
 	endTimeInput          textinput.Model
+	id                    string
 	name                  string
 	savePath              string
 	maximumDownloads      int

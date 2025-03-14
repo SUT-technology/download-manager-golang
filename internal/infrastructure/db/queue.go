@@ -11,6 +11,39 @@ type queueTable struct {
 	pool *Pool
 }
 
+func (q queueTable) FindAndUpdateQueue(ctx context.Context, id string, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) (*entity.Queue, error) {
+	var queueData []entity.Queue
+	err := q.pool.loadData(q.pool.queuePath, &queueData)
+	if err != nil {
+		return nil, fmt.Errorf("can't load data from json: %w", err)
+	}
+
+	var queue entity.Queue
+	var index int
+	for i, que := range queueData {
+		if que.ID == id {
+			queue = entity.Queue{
+				ID:               id,
+				Name:             name,
+				SavePath:         savePath,
+				MaximumDownloads: maximumDownload,
+				MaximumBandWidth: maximumBandWidth,
+				ActivityInterval: activityInterval,
+			}
+			index = i
+			break
+		}
+	}
+	queueData[index] = queue
+
+	err = q.pool.saveData(q.pool.queuePath, queueData)
+	if err != nil {
+		return nil, fmt.Errorf("can't save data to json: %w", err)
+	}
+
+	return &queue, nil
+}
+
 func (q queueTable) DeleteQueue(ctx context.Context, id string) (*entity.Queue, error) {
 	var queueData []entity.Queue
 	err := q.pool.loadData(q.pool.queuePath, &queueData)
