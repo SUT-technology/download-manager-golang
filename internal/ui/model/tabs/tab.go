@@ -147,7 +147,7 @@ func InitiateQueuesTab(Hndlr *model.Handlers) Tab {
 		panic(err)
 	}
 	return Tab{
-		num: 2,
+		num: 3,
 		TAB: QueuesTab{
 			queues:           queues,
 			cursorIndex:      0,
@@ -369,6 +369,20 @@ func (tab Tab) View() string {
 		}
 		if downloadsTab.deleteAction {
 			view = fmt.Sprintf("%v\n%v\n%v", view, downloadsTab.message, "do you want to continue? (y => yes) (n => no)")
+		}
+	} else if tab.num == 3 {
+		var queuesTab = tab.TAB.(QueuesTab)
+		view = "                   ----------------------------------------------------------- Queues Tab -----------------------------------------------------------"
+		if !queuesTab.deleteAction {
+			view = fmt.Sprintf("%v\nSelect a queue:", view)
+			for i, queue := range queuesTab.queues {
+				cursor := "  "
+				if i == queuesTab.cursorIndex {
+					cursor = "> "
+				}
+				view = fmt.Sprintf("%v\n%vName: %v    Save-path: %v    Maximum-concurrent-downloads: %v    Maximum-band-width: %v    Activity-interval: from %v to %v", view, cursor, queue.Name, queue.SavePath, queue.MaximumDownloads, queue.MaximumBandWidth, queue.ActivityInterval.StartTime, queue.ActivityInterval.EndTime)
+			}
+			view = fmt.Sprintf("%v\n\n(ctrl+a => pause/resume) (ctrl+s => retry) (ctrl+d => delete)", view)
 		}
 	}
 	return view

@@ -20,7 +20,7 @@ func Run(wg *sync.WaitGroup, srcv *handlers.HandlerSrcv) error {
 		QueueHandler:    &srcv.QueueHndlr,
 	}
 
-	p := tea.NewProgram(tabs.InitiateDownloadsTab(&Hndlr))
+	p := tea.NewProgram(tabs.InitiateQueuesTab(&Hndlr))
 	if err := p.Start(); err != nil {
 		fmt.Printf("Error starting program: %v\n", err)
 	}
