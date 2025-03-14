@@ -36,26 +36,6 @@ type AddDownloadTab struct {
 	err             error
 }
 
-type DownloadsTab struct {
-	downloads    []entity.Download
-	cursorIndex  int
-	deleteAction bool
-	message      string
-}
-
-type QueuesTab struct {
-	downloads    []entity.Download
-	cursorIndex  int
-	deleteAction bool
-	message      string
-}
-
-type queuesTableTab struct {
-	queues []entity.Queue
-}
-
-var hndlr model.Handlers
-
 func InitiateAddDownloadTab(Hndlr *model.Handlers) Tab {
 
 	hndlr = *Hndlr
@@ -100,6 +80,13 @@ func InitiateAddDownloadTab(Hndlr *model.Handlers) Tab {
 	}
 }
 
+type DownloadsTab struct {
+	downloads    []entity.Download
+	cursorIndex  int
+	deleteAction bool
+	message      string
+}
+
 func InitiateDownloadsTab(Hndlr *model.Handlers) Tab {
 	hndlr = *Hndlr
 	downloads, err := hndlr.DownloadHandler.GetDownloads()
@@ -116,6 +103,66 @@ func InitiateDownloadsTab(Hndlr *model.Handlers) Tab {
 	}
 }
 
+type QueuesTab struct {
+	queues           []entity.Queue
+	cursorIndex      int
+	deleteAction     bool
+	editAction       bool
+	maxSpeed         textinput.Model
+	savePath         textinput.Model
+	maximumDownloads textinput.Model
+	bandWidth        textinput.Model
+	message          string
+}
+
+func InitiateQueuesTab(Hndlr *model.Handlers) Tab {
+	hndlr = *Hndlr
+
+	maxSpeed := textinput.New()
+	maxSpeed.Placeholder = ""
+	maxSpeed.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
+	maxSpeed.Focus()
+	maxSpeed.Width = 100
+
+	savePath := textinput.New()
+	savePath.Placeholder = ""
+	savePath.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
+	savePath.Focus()
+	savePath.Width = 100
+
+	maximumDownloads := textinput.New()
+	maximumDownloads.Placeholder = ""
+	maximumDownloads.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
+	maximumDownloads.Focus()
+	maximumDownloads.Width = 100
+
+	bandWidth := textinput.New()
+	bandWidth.Placeholder = ""
+	bandWidth.TextStyle = lipgloss.NewStyle().Blink(true).Foreground(lipgloss.Color("205"))
+	bandWidth.Focus()
+	bandWidth.Width = 100
+
+	queues, err := hndlr.QueueHandler.GetQueues()
+	if err != nil {
+		panic(err)
+	}
+	return Tab{
+		num: 2,
+		TAB: QueuesTab{
+			queues:           queues,
+			cursorIndex:      0,
+			deleteAction:     false,
+			editAction:       false,
+			maxSpeed:         maxSpeed,
+			savePath:         savePath,
+			maximumDownloads: maximumDownloads,
+			bandWidth:        bandWidth,
+		},
+	}
+}
+
+var hndlr model.Handlers
+
 func (tab Tab) Init() tea.Cmd {
 	return textinput.Blink
 }
@@ -125,14 +172,16 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch message := msg.(type) {
 	case tea.KeyMsg:
 		switch message.Type {
-		case tea.KeyF1:
-			ClearScreen()
-			return InitiateDownloadsTab(&hndlr), cmd
-		case tea.KeyF2:
-			ClearScreen()
-			return InitiateAddDownloadTab(&hndlr), cmd
-		case tea.KeyF3:
-			ClearScreen()
+		case tea.KeyShiftLeft:
+			if tab.num == 1 {
+				ClearScreen()
+				return InitiateDownloadsTab(&hndlr), cmd
+			} else if tab.num == 2 {
+				ClearScreen()
+				return InitiateAddDownloadTab(&hndlr), cmd
+			}
+
+		case tea.KeyShiftRight:
 		}
 	}
 	if tab.num == 1 {
@@ -219,9 +268,13 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case tea.KeyDown:
 					downloadsTab.cursorIndex = (downloadsTab.cursorIndex + 1) % len(downloadsTab.downloads)
 				case tea.KeyCtrlA:
+
 				//TODO: pause/resume
+
 				case tea.KeyCtrlS:
+
 				//TODO: retry
+
 				case tea.KeyCtrlD:
 					download, err := hndlr.DownloadHandler.DeleteDownload(downloadsTab.downloads[downloadsTab.cursorIndex].ID)
 					if err != nil {
@@ -243,6 +296,25 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		tab.TAB = downloadsTab
+		return tab, cmd
+	} else if tab.num == 3 {
+		queuesTab := tab.TAB.(QueuesTab)
+		if !queuesTab.deleteAction && !queuesTab.editAction {
+			switch msg := msg.(type) {
+			case tea.KeyMsg:
+				switch msg.Type {
+				case tea.KeyUp:
+					if queuesTab.cursorIndex == 0 {
+						queuesTab.cursorIndex = len(queuesTab.queues) - 1
+					} else {
+						queuesTab.cursorIndex--
+					}
+				case tea.KeyDown:
+					queuesTab.cursorIndex = (queuesTab.cursorIndex + 1) % len(queuesTab.queues)
+				}
+			}
+		}
+		tab.TAB = queuesTab
 		return tab, cmd
 	}
 	return tab, cmd
