@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/application/services/queuesrvc"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"io"
 	"net/http"
 	"net/url"
@@ -69,15 +70,36 @@ func (d DownloadService) GetDownloadById(ctx context.Context, id string) (*entit
 
 	return download, nil
 }
-
-func (d DownloadService) CreateDownload(ctx context.Context, Url string, queueId string, fileName string) error {
+func (d DownloadService) DeleteDownload(ctx context.Context, id string) (*entity.Download, error) {
 	var (
 		download *entity.Download
 		err      error
 	)
 
 	queryFunc := func(r *repository.Repo) error {
-		download, err = r.Tables.Downloads.CreateDownload(ctx, Url, queueId, fileName)
+		download, err = r.Tables.Downloads.DeleteDownload(ctx, id)
+		if err != nil {
+			return fmt.Errorf("getting data from downloads: %w", err)
+		}
+		return nil
+	}
+
+	err = d.db.Query(queryFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	return download, nil
+}
+
+func (d DownloadService) CreateDownload(ctx context.Context, dto dto.DownloadDto) error {
+	var (
+		download *entity.Download
+		err      error
+	)
+
+	queryFunc := func(r *repository.Repo) error {
+		download, err = r.Tables.Downloads.CreateDownload(ctx, dto.URL, dto.QueueID, dto.FileName)
 		if err != nil {
 			return fmt.Errorf("creating download: %w", err)
 		}
