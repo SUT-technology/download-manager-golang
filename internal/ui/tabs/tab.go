@@ -2,7 +2,6 @@ package tabs
 
 import (
 	"fmt"
-	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbletea"
 	"strconv"
@@ -20,6 +19,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// general key listeners: shifting between tabs and quit
 	case tea.KeyMsg:
+
 		switch message.Type {
 		case tea.KeyLeft:
 			if tab.num == 3 {
@@ -49,6 +49,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if tab.num == 1 {
+		// add download tab
 
 		// add download tab listeners and action handlers
 		var addDownloadTab = tab.TAB.(AddDownloadTab)
@@ -61,6 +62,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if addDownloadTab.finished {
+
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				if key := msg.String(); strings.ToLower(key)[0] == 'y' {
@@ -70,7 +72,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return tab, tea.Quit
 				}
 			}
+
 		} else if addDownloadTab.url == "" {
+			// get the url form input
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
@@ -79,7 +83,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				addDownloadTab.urlInput, cmd = addDownloadTab.urlInput.Update(msg)
 			}
+
 		} else if addDownloadTab.selectedQueueId == "" {
+			// select a queue based on their name
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
@@ -95,7 +101,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					addDownloadTab.selectedQueueId = addDownloadTab.queues[addDownloadTab.cursorIndex].ID
 				}
 			}
+
 		} else if addDownloadTab.fileName == "" {
+			// get the file name form input
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
@@ -106,17 +114,22 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						addDownloadTab.err = err
 					}
 					addDownloadTab.finished = true
-					tab.TAB = addDownloadTab
-					return tab, nil
 				}
 				addDownloadTab.fileNameInput, cmd = addDownloadTab.fileNameInput.Update(msg)
 			}
+
 		}
+
 		tab.TAB = addDownloadTab
 		return tab, cmd
+
 	} else if tab.num == 2 {
+		//downloads list tab
+
 		downloadsTab := tab.TAB.(DownloadsTab)
+
 		if !downloadsTab.deleteAction {
+
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
@@ -137,6 +150,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				//TODO: retry
 
 				case tea.KeyCtrlD:
+					// press ctrl+d to delete the selected download
 					download, err := hndlr.DownloadHandler.DeleteDownload(downloadsTab.downloads[downloadsTab.cursorIndex].ID)
 					if err != nil {
 						panic(err)
@@ -145,7 +159,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					downloadsTab.deleteAction = true
 				}
 			}
+
 		} else {
+
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				if key := msg.String(); strings.ToLower(key)[0] == 'y' {
@@ -155,12 +171,19 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return tab, tea.Quit
 				}
 			}
+
 		}
+
 		tab.TAB = downloadsTab
 		return tab, cmd
+
 	} else if tab.num == 3 {
+		// queues list tab
+
 		queuesTab := tab.TAB.(QueuesTab)
+
 		if queuesTab.action == "list" {
+			// the list panel key handlings
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				switch msg.Type {
@@ -191,7 +214,10 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					queuesTab.action = "finishedDeleting"
 				}
 			}
+
 		} else if queuesTab.action == "edit" {
+			// edit panel
+			// initiating the edit panel textinputs placeholders
 			queue := queuesTab.queues[queuesTab.cursorIndex]
 			queuesTab.id = queue.ID
 			queuesTab.nameInput.Placeholder = queue.Name
@@ -210,7 +236,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				queuesTab.endTimeInput.Placeholder = " "
 			}
+
 			if queuesTab.name == "" {
+				// get the new name of the queue from input
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -223,7 +251,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.nameInput, cmd = queuesTab.nameInput.Update(msg)
 				}
+
 			} else if queuesTab.savePath == "" {
+				// get the new save path of the queue from input
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -236,7 +266,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.savePathInput, cmd = queuesTab.savePathInput.Update(msg)
 				}
+
 			} else if queuesTab.maximumDownloads == 0 {
+				// get the new maximum number of concurrent downloads from input
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -253,7 +285,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.maximumDownloadsInput, cmd = queuesTab.maximumDownloadsInput.Update(msg)
 				}
+
 			} else if queuesTab.maximumBandWidth == 0 {
+				// get the new maximum bandwidth from input
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -270,7 +304,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.maximumBandWidthInput, cmd = queuesTab.maximumBandWidthInput.Update(msg)
 				}
+
 			} else if queuesTab.startTime == "" {
+				// get the new start time from input
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -287,7 +323,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.startTimeInput, cmd = queuesTab.startTimeInput.Update(msg)
 				}
+
 			} else if queuesTab.endTime == "" {
+				// get the new end time from input
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -301,27 +339,8 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							queuesTab.endTime = queuesTab.startTimeInput.Placeholder
 						}
-						var date entity.TimeInterval
-						if queuesTab.startTime == " " {
-							date.StartTime, _ = time.Parse("2006-02-01 15:04", "0001-01-01 00:00")
-						} else {
-							startTime, err := time.Parse("2006-02-01 15:04", queuesTab.startTime)
-							if err != nil {
-								panic(err)
-							}
-							date.StartTime = startTime
-						}
-						if queuesTab.endTime == " " {
-							date.EndTime, _ = time.Parse("2006-02-01 15:04", "9999-30-12 23:59")
-						} else {
-							endTime, err := time.Parse("2006-02-01 15:04", queuesTab.endTime)
-							if err != nil {
-								panic(err)
-							}
-							date.EndTime = endTime
-						}
-						queue.ActivityInterval = date
-						_, err := hndlr.QueueHandler.FindAndUpdateQueue(queue.ID, queuesTab.name, queuesTab.savePath, queuesTab.maximumDownloads, queuesTab.maximumBandWidth, date)
+						var date = getInterval(queuesTab.startTime, queuesTab.endTime)
+						err := UpdateQueue(queue.ID, queuesTab.name, queuesTab.savePath, queuesTab.maximumDownloads, queuesTab.maximumBandWidth, date)
 						if err != nil {
 							queuesTab.err = err
 						}
@@ -329,8 +348,11 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.endTimeInput, cmd = queuesTab.endTimeInput.Update(msg)
 				}
+
 			}
+
 		} else if queuesTab.action == "new" {
+
 			if queuesTab.name == "" {
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
@@ -340,7 +362,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.nameInput, cmd = queuesTab.nameInput.Update(msg)
 				}
+
 			} else if queuesTab.savePath == "" {
+
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -349,7 +373,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.savePathInput, cmd = queuesTab.savePathInput.Update(msg)
 				}
+
 			} else if queuesTab.maximumDownloads == 0 {
+
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -362,7 +388,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.maximumDownloadsInput, cmd = queuesTab.maximumDownloadsInput.Update(msg)
 				}
+
 			} else if queuesTab.maximumBandWidth == 0 {
+
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -375,7 +403,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.maximumBandWidthInput, cmd = queuesTab.maximumBandWidthInput.Update(msg)
 				}
+
 			} else if queuesTab.startTime == "" {
+
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -392,7 +422,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.startTimeInput, cmd = queuesTab.startTimeInput.Update(msg)
 				}
+
 			} else if queuesTab.endTime == "" {
+
 				switch msg := msg.(type) {
 				case tea.KeyMsg:
 					switch msg.Type {
@@ -406,25 +438,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						} else {
 							queuesTab.endTime = " "
 						}
-						var date entity.TimeInterval
-						if queuesTab.startTime == " " {
-							date.StartTime, _ = time.Parse("2006-02-01 15:04", "0001-01-01 00:00")
-						} else {
-							startTime, err := time.Parse("2006-02-01 15:04", queuesTab.startTime)
-							if err != nil {
-								panic(err)
-							}
-							date.StartTime = startTime
-						}
-						if queuesTab.endTime == " " {
-							date.EndTime, _ = time.Parse("2006-02-01 15:04", "9999-30-12 23:59")
-						} else {
-							endTime, err := time.Parse("2006-02-01 15:04", queuesTab.endTime)
-							if err != nil {
-								panic(err)
-							}
-							date.EndTime = endTime
-						}
+						date := getInterval(queuesTab.startTime, queuesTab.endTime)
 						err := CreateQueue(queuesTab.name, queuesTab.savePath, queuesTab.maximumDownloads, queuesTab.maximumBandWidth, date)
 						if err != nil {
 							queuesTab.err = err
@@ -433,8 +447,10 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 					queuesTab.endTimeInput, cmd = queuesTab.endTimeInput.Update(msg)
 				}
+
 			}
 		} else if queuesTab.action[:8] == "finished" {
+
 			switch msg := msg.(type) {
 			case tea.KeyMsg:
 				if key := msg.String(); strings.ToLower(key)[0] == 'y' {
@@ -443,9 +459,12 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return tab, tea.Quit
 				}
 			}
+
 		}
+
 		tab.TAB = queuesTab
 		return tab, cmd
+
 	}
 	return tab, cmd
 }

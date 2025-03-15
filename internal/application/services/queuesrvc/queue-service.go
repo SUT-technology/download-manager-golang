@@ -3,6 +3,7 @@ package queuesrvc
 import (
 	"context"
 	"fmt"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"github.com/SUT-technology/download-manager-golang/internal/repository"
@@ -84,13 +85,13 @@ func (q QueueService) GetQueueById(ctx context.Context, id string) (*entity.Queu
 	return queue, nil
 }
 
-func (q QueueService) CreateQueue(ctx context.Context, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) error {
+func (q QueueService) CreateQueue(ctx context.Context, dto dto.QueueDto) error {
 	var (
 		err error
 	)
 
 	queryFunc := func(r *repository.Repo) error {
-		err = r.Tables.Queues.CreateQueue(ctx, name, savePath, maximumDownload, maximumBandWidth, activityInterval)
+		err = r.Tables.Queues.CreateQueue(ctx, dto.Name, dto.SavePath, dto.MaximumDownloads, dto.MaximumBandWidth, dto.ActivityInterval)
 		if err != nil {
 			return fmt.Errorf("creating queue: %w", err)
 		}
@@ -106,13 +107,11 @@ func (q QueueService) CreateQueue(ctx context.Context, name string, savePath str
 	return nil
 }
 
-func (q QueueService) FindAndUpdateQueue(ctx context.Context, id string, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) (*entity.Queue, error) {
-	var (
-		queue *entity.Queue
-		err   error
-	)
+func (q QueueService) FindAndUpdateQueue(ctx context.Context, id string, dto dto.QueueDto) error {
+	var err error
+
 	queryFunc := func(r *repository.Repo) error {
-		queue, err = r.Tables.Queues.FindAndUpdateQueue(ctx, id, name, savePath, maximumDownload, maximumBandWidth, activityInterval)
+		err = r.Tables.Queues.FindAndUpdateQueue(ctx, id, dto.Name, dto.SavePath, dto.MaximumDownloads, dto.MaximumBandWidth, dto.ActivityInterval)
 		if err != nil {
 			return fmt.Errorf("getting data from downloads: %w", err)
 		}
@@ -121,8 +120,8 @@ func (q QueueService) FindAndUpdateQueue(ctx context.Context, id string, name st
 
 	err = q.db.Query(queryFunc)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return queue, nil
+	return nil
 }
