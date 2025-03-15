@@ -62,17 +62,17 @@ func (h QueueHndlr) DeleteQueue(id string) (*entity.Queue, error) {
 	return queue, nil
 }
 
-func (h QueueHndlr) FindAndUpdateQueue(id string, name string, savePath string, maximumDownload int, maximumBandWidth float64, activityInterval entity.TimeInterval) (*entity.Queue, error) {
+func (h QueueHndlr) FindAndUpdateQueue(id string, queueDto dto.QueueDto) error {
 	ctx := context.Background()
 	slogger.Debug(ctx, "recieve request", slog.Any("queue id", id))
 
-	queue, err := h.Services.QueueSrvc.FindAndUpdateQueue(ctx, id, name, savePath, maximumDownload, maximumBandWidth, activityInterval)
+	err := h.Services.QueueSrvc.FindAndUpdateQueue(ctx, id, queueDto)
 	if err != nil {
 		slogger.Debug(ctx, "find and update by id", slog.Any("queue id", id), slogger.Err("error", err))
-		return nil, fmt.Errorf("get queue: %w", err)
+		return fmt.Errorf("get queue: %w", err)
 	}
 
-	return queue, nil
+	return nil
 }
 
 func (h QueueHndlr) CreateQueue(queueDto dto.QueueDto) error {
@@ -80,7 +80,7 @@ func (h QueueHndlr) CreateQueue(queueDto dto.QueueDto) error {
 
 	slogger.Debug(ctx, "recieve request", slog.Any("queueDto", queueDto))
 
-	err := h.Services.QueueSrvc.CreateQueue(ctx, queueDto.Name, queueDto.SavePath, queueDto.MaximumDownloads, queueDto.MaximumBandWidth, queueDto.ActivityInterval)
+	err := h.Services.QueueSrvc.CreateQueue(ctx, queueDto)
 	if err != nil {
 		slogger.Debug(ctx, "create queue", slog.Any("queueDto", queueDto), slogger.Err("error", err))
 		return fmt.Errorf("create queue: %w", err)
