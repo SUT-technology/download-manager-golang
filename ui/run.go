@@ -3,7 +3,7 @@ package ui
 import (
 	"fmt"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
-	"github.com/SUT-technology/download-manager-golang/internal/ui/tabs"
+	"github.com/SUT-technology/download-manager-golang/ui/tabs"
 	tea "github.com/charmbracelet/bubbletea"
 	"sync"
 )
