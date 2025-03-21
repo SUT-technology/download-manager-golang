@@ -1,0 +1,6 @@
+db:
+  downloads: assets/db/downloads.json
+  queues: assets/db/queues.json
+logger:
+  level: debug
+env: dev
