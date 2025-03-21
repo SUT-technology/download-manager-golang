@@ -55,18 +55,18 @@ func ClearScreen() {
 
 func getInterval(startTime string, endTime string) (date entity.TimeInterval) {
 	if startTime == " " {
-		date.StartTime, _ = time.Parse("2006-02-01 15:04", "0001-01-01 00:00")
+		date.StartTime, _ = time.Parse("15:04:05", "00:00:00")
 	} else {
-		startTime, err := time.Parse("2006-02-01 15:04", startTime)
+		startTime, err := time.Parse("15:04:05", startTime)
 		if err != nil {
 			panic(err)
 		}
 		date.StartTime = startTime
 	}
 	if endTime == " " {
-		date.EndTime, _ = time.Parse("2006-02-01 15:04", "9999-30-12 23:59")
+		date.EndTime, _ = time.Parse("15:04:05", "23:59:59")
 	} else {
-		endTime, err := time.Parse("2006-02-01 15:04", endTime)
+		endTime, err := time.Parse("15:04:05", endTime)
 		if err != nil {
 			panic(err)
 		}

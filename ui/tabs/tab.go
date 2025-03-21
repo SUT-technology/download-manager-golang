@@ -118,9 +118,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					_, err := CreateDownload(addDownloadTab.url, addDownloadTab.selectedQueueId, addDownloadTab.fileName)
 					if err != nil {
 						addDownloadTab.err = err
+					} else {
+						return InitiateDownloadsTab(&hndlr), WatchProgressCmd()
 					}
-
-					return InitiateDownloadsTab(&hndlr), WatchProgressCmd()
 				}
 				addDownloadTab.fileNameInput, cmd = addDownloadTab.fileNameInput.Update(msg)
 			}
@@ -259,15 +259,17 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			queuesTab.savePathInput.Placeholder = queue.SavePath
 			queuesTab.maximumDownloadsInput.Placeholder = fmt.Sprintf("%v", queue.MaximumDownloads)
 			queuesTab.maximumBandWidthInput.Placeholder = fmt.Sprintf("%v", queue.MaximumBandWidth)
-			var temp1 = fmt.Sprintf("%v", queue.ActivityInterval.StartTime.Format("2006-02-01 15:04"))
-			if temp1 != "0001-01-01 00:00" {
-				queuesTab.startTimeInput.Placeholder = fmt.Sprintf("%v", queue.ActivityInterval.StartTime.Format("2006-02-01 15:04"))
+
+			tempStart := queue.ActivityInterval.StartTime.Format("15:04:05")
+			if tempStart != "00:00:00" {
+				queuesTab.startTimeInput.Placeholder = tempStart
 			} else {
 				queuesTab.startTimeInput.Placeholder = " "
 			}
-			var temp2 = fmt.Sprintf("%v", queue.ActivityInterval.EndTime.Format("2006-02-01 15:04"))
-			if temp2 != "9999-12-30 23:59" {
-				queuesTab.endTimeInput.Placeholder = fmt.Sprintf("%v", queue.ActivityInterval.EndTime.Format("2006-02-01 15:04"))
+
+			tempEnd := queue.ActivityInterval.EndTime.Format("15:04:05")
+			if tempEnd != "23:59:59" {
+				queuesTab.endTimeInput.Placeholder = tempEnd
 			} else {
 				queuesTab.endTimeInput.Placeholder = " "
 			}
@@ -347,7 +349,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.startTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.startTimeInput.Value())
+							_, err := time.Parse("15:04:05", queuesTab.startTimeInput.Value())
 							if err != nil {
 								queuesTab.startTimeInput.Reset()
 							}
@@ -366,9 +368,9 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.endTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.endTimeInput.Value())
+							_, err := time.Parse("15:04:05", queuesTab.endTimeInput.Value())
 							if err != nil {
-								queuesTab.endTimeInput.Reset()
+								// queuesTab.endTimeInput.Reset()
 							}
 							queuesTab.endTime = queuesTab.endTimeInput.Value()
 						} else {
@@ -446,7 +448,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.startTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.startTimeInput.Value())
+							_, err := time.Parse("15:04:05", queuesTab.startTimeInput.Value())
 							if err != nil {
 								queuesTab.startTimeInput.Reset()
 							}
@@ -465,7 +467,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					switch msg.Type {
 					case tea.KeyEnter:
 						if queuesTab.endTimeInput.Value() != "" {
-							_, err := time.Parse("2006-02-01 15:04", queuesTab.endTimeInput.Value())
+							_, err := time.Parse("15:04:05", queuesTab.endTimeInput.Value())
 							if err != nil {
 								queuesTab.endTimeInput.Reset()
 							}
@@ -510,25 +512,10 @@ func (tab Tab) View() string {
 		view = "----------------------------------------------------------- Add Download Tab -----------------------------------------------------------"
 		var addDownloadTab = tab.TAB.(AddDownloadTab)
 
-		if addDownloadTab.progress > 0 && !addDownloadTab.finished {
-			// go func() {
-			ClearScreen()
-			view += fmt.Sprintf("\nDownload Progressssssss: %v", addDownloadTab.progress)
-			fmt.Println(view)
-
-			// 	for {
-			// 		addDownloadTab.mu.Lock() // Lock the mutex before accessing progress
-			// 		if addDownloadTab.progress > 0 {
-			// 			view += fmt.Sprintf("\nDownload Progress: %v\n", addDownloadTab.progress)
-			// 		}
-			// 		addDownloadTab.mu.Unlock()  // Unlock the mutex after accessing progress
-			// 		time.Sleep(1 * time.Second) // Sleep for a second before printing again
-			// 	}
-			// }()
+		if addDownloadTab.err != nil {
+			view += fmt.Sprintf("\n %v", addDownloadTab.err)
 		}
-		if addDownloadTab.finished {
-			view += "\nDownload added successfully!\n\nDo you want to continue? (y => yes) (n => no) (ctrl+c => quit)"
-		} else if addDownloadTab.url == "" {
+		if addDownloadTab.url == "" {
 			view += fmt.Sprintf(
 				"\nEnter the url here:\n\n%s\n\n%s",
 				addDownloadTab.urlInput.View(),
@@ -570,7 +557,8 @@ func (tab Tab) View() string {
 				if i == downloadsTab.cursorIndex {
 					cursor = "> "
 				}
-				view = fmt.Sprintf("%v\n%vQueue: %v    Status: %v    Speed: %vKB/s    Progress: %v", view, cursor, queue.Name, download.Status, download.CurrentSpeed, download.Progress)
+				view = fmt.Sprintf("%v\n%vQueue: %v    Status: %v    Speed: %vKB/s    Progress: %v%%", view, cursor, queue.Name, download.Status, int(download.CurrentSpeed), int(download.Progress))
+
 			}
 			view = fmt.Sprintf("%v\n\n(ctrl+a => pause/resume) (ctrl+s => retry) (ctrl+d => delete) (ctrl+c => quit)", view)
 		}
@@ -617,13 +605,13 @@ func (tab Tab) View() string {
 				) + "\n"
 			} else if queuesTab.startTime == "" {
 				view += fmt.Sprintf(
-					"\nEnter the start time of the queue here with format \"yyyy-dd-MM hh:mm\" (optional):\n\n%s\n\n%s",
+					"\nEnter the start time of the queue here with format \"hh:mm:ss\" (optional):\n\n%s\n\n%s",
 					queuesTab.startTimeInput.View(),
 					"(ctrl+c => quit)",
 				) + "\n"
 			} else if queuesTab.endTime == "" {
 				view += fmt.Sprintf(
-					"\nEnter the end time of the queue here with format \"yyyy-dd-MM hh:mm\" (optional):\n\n%s\n\n%s",
+					"\nEnter the end time of the queue here with format \"hh:mm:ss\" (optional):\n\n%s\n\n%s",
 					queuesTab.endTimeInput.View(),
 					"(ctrl+c => quit)",
 				) + "\n"
