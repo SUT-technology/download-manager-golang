@@ -3,14 +3,15 @@ package command
 import (
 	"flag"
 	"fmt"
+	"log/slog"
+	"sync"
+
 	"github.com/SUT-technology/download-manager-golang/internal/application/services"
 	"github.com/SUT-technology/download-manager-golang/internal/infrastructure/db"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/interface/handlers"
 	"github.com/SUT-technology/download-manager-golang/ui"
 	"github.com/SUT-technology/download-manager-golang/ui/tabs"
-	"log/slog"
-	"sync"
 )
 
 func Run() error {
@@ -38,9 +39,45 @@ func Run() error {
 
 	hndlrs := handlers.New(srvcs)
 
+	// progChan := make(chan int)
+	// var err1 error
+
+	// // Create a goroutine for the download
+	// go func() {
+	// 	err1 = hndlrs.DownloadHndlr.CreateDownload(dto.DownloadDto{
+	// 		URL:      "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
+	// 		QueueID:  "a187f448-12f2-4203-9197-fc49425f05e8",
+	// 		FileName: "testisaa",
+	// 	}, progChan)
+	// }()
+
+	// if err1 != nil {
+	// 	return err1
+	// }
+
+	// ticker := time.NewTicker(1 * time.Second)
+	// defer ticker.Stop()
+
+	// // Loop to read progress updates from the channel
+	// for {
+	// 	select {
+	// 	case val, ok := <-progChan:
+	// 		if !ok {
+	// 			// Channel is closed, exit the loop
+	// 			fmt.Println("Channel closed, exiting.")
+	// 			return nil
+	// 		}
+	// 		// Print the received progress value
+	// 		fmt.Println("Received value:", val)
+	// 	case <-ticker.C:
+	// 		// You could check for timeout or progress every second
+	// 		fmt.Println("Waiting for progress update...")
+	// 	}
+	// }
+
 	// RUN UI AND USE IT
 
-	//wg := sync.WaitGroup{}
+	// wg := sync.WaitGroup{}
 
 	var wg sync.WaitGroup
 	wg.Add(1)

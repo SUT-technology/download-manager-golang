@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+
 	"github.com/SUT-technology/download-manager-golang/pkg/tools/generator"
 
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
@@ -71,7 +72,7 @@ func (d downloadTable) DeleteDownload(ctx context.Context, id string) (*entity.D
 	return download, nil
 }
 
-func (d downloadTable) CreateDownload(ctx context.Context, url string, queueId string, fileName string) (*entity.Download, error) {
+func (d downloadTable) CreateDownload(ctx context.Context, url string, queueId string, fileName string, totalSize int64, outFile string) (*entity.Download, error) {
 	var downloadData []entity.Download
 	err := d.pool.loadData(d.pool.downloadPath, &downloadData)
 	if err != nil {
@@ -85,10 +86,16 @@ func (d downloadTable) CreateDownload(ctx context.Context, url string, queueId s
 	id := generator.IdGenerator(ids)
 
 	download := &entity.Download{
-		ID:       id,
-		URL:      url,
-		QueueId:  queueId,
-		FileName: fileName,
+		ID:           id,
+		URL:          url,
+		QueueId:      queueId,
+		FileName:     fileName,
+		TotalSize:    totalSize,
+		Downloaded:   0,
+		Progress:     0,
+		CurrentSpeed: 0,
+		Status:       "pending",
+		OutPath:      outFile,
 	}
 
 	downloadData = append(downloadData, *download)
@@ -99,4 +106,13 @@ func (d downloadTable) CreateDownload(ctx context.Context, url string, queueId s
 	}
 
 	return download, nil
+}
+
+func (d downloadTable) UpdateDownloads(ctx context.Context, downloads []entity.Download) error {
+	err := d.pool.saveData(d.pool.downloadPath, downloads)
+	if err != nil {
+		return fmt.Errorf("can't save data to json: %w", err)
+	}
+
+	return nil
 }

@@ -27,6 +27,8 @@ type AddDownloadTab struct {
 	cursorIndex     int
 	finished        bool
 	err             error
+	progress        int
+	progressChan    chan int
 }
 
 type DownloadsTab struct {

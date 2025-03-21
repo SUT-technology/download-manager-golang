@@ -2,15 +2,21 @@ package tabs
 
 import (
 	"fmt"
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbletea"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/SUT-technology/download-manager-golang/internal/application/services/downloadsrvc"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/model"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func (tab Tab) Init() tea.Cmd {
-	return textinput.Blink
+	return tea.Batch(
+		textinput.Blink,
+		WatchProgressCmd(),
+	)
 }
 
 func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -109,15 +115,15 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				switch msg.Type {
 				case tea.KeyEnter:
 					addDownloadTab.fileName = addDownloadTab.fileNameInput.Value()
-					err := CreateDownload(addDownloadTab.url, addDownloadTab.selectedQueueId, addDownloadTab.fileName)
+					_, err := CreateDownload(addDownloadTab.url, addDownloadTab.selectedQueueId, addDownloadTab.fileName)
 					if err != nil {
 						addDownloadTab.err = err
 					}
-					addDownloadTab.finished = true
+
+					return InitiateDownloadsTab(&hndlr), WatchProgressCmd()
 				}
 				addDownloadTab.fileNameInput, cmd = addDownloadTab.fileNameInput.Update(msg)
 			}
-
 		}
 
 		tab.TAB = addDownloadTab
@@ -142,13 +148,29 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case tea.KeyDown:
 					downloadsTab.cursorIndex = (downloadsTab.cursorIndex + 1) % len(downloadsTab.downloads)
 				case tea.KeyCtrlA:
-
-				//TODO: pause/resume
+					//pause/resume
+					curDl := downloadsTab.downloads[downloadsTab.cursorIndex]
+					if controlChan, exists := downloadsrvc.ControlChannels[curDl.ID]; exists {
+						if curDl.Status == "downloading" {
+							controlChan <- model.PauseCommand
+						} else if curDl.Status == "paused" {
+							controlChan <- model.ResumeCommand
+						}
+					}
 
 				case tea.KeyCtrlS:
-
-				//TODO: retry
-
+					// Retry the selected download if not complete.
+					curDl := downloadsTab.downloads[downloadsTab.cursorIndex]
+					if curDl.Status != "completed" {
+						curDl.Downloaded = 0
+						curDl.Progress = 0
+						curDl.Status = "downloading"
+						downloadsTab.downloads[downloadsTab.cursorIndex] = curDl
+						// Create a new control channel and start a new worker.
+						controlChan := make(chan model.DownloadControlMessage)
+						downloadsrvc.ControlChannels[curDl.ID] = controlChan
+						go hndlr.DownloadHandler.DownloadWorker(&downloadsTab.downloads[downloadsTab.cursorIndex], downloadsrvc.ProgressChan, controlChan)
+					}
 				case tea.KeyCtrlD:
 					// press ctrl+d to delete the selected download
 					download, err := hndlr.DownloadHandler.DeleteDownload(downloadsTab.downloads[downloadsTab.cursorIndex].ID)
@@ -158,6 +180,19 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					downloadsTab.message = fmt.Sprintf("%s deleted successfully", download.FileName)
 					downloadsTab.deleteAction = true
 				}
+			case model.DownloadProgressMsg:
+				// Update the matching download’s progress and status.
+				for i, d := range downloadsTab.downloads {
+					if d.ID == msg.DownloadID {
+						downloadsTab.downloads[i].Progress = msg.Progress
+						downloadsTab.downloads[i].CurrentSpeed = msg.Speed
+						downloadsTab.downloads[i].Status = msg.Status
+						downloadsTab.downloads[i].Downloaded = msg.Downloaded
+						break
+					}
+				}
+				tab.TAB = downloadsTab
+				return tab, WatchProgressCmd()
 			}
 
 		} else {
@@ -472,8 +507,25 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (tab Tab) View() string {
 	var view string
 	if tab.num == 1 {
-		view = "                   ----------------------------------------------------------- Add Download Tab -----------------------------------------------------------"
+		view = "----------------------------------------------------------- Add Download Tab -----------------------------------------------------------"
 		var addDownloadTab = tab.TAB.(AddDownloadTab)
+
+		if addDownloadTab.progress > 0 && !addDownloadTab.finished {
+			// go func() {
+			ClearScreen()
+			view += fmt.Sprintf("\nDownload Progressssssss: %v", addDownloadTab.progress)
+			fmt.Println(view)
+
+			// 	for {
+			// 		addDownloadTab.mu.Lock() // Lock the mutex before accessing progress
+			// 		if addDownloadTab.progress > 0 {
+			// 			view += fmt.Sprintf("\nDownload Progress: %v\n", addDownloadTab.progress)
+			// 		}
+			// 		addDownloadTab.mu.Unlock()  // Unlock the mutex after accessing progress
+			// 		time.Sleep(1 * time.Second) // Sleep for a second before printing again
+			// 	}
+			// }()
+		}
 		if addDownloadTab.finished {
 			view += "\nDownload added successfully!\n\nDo you want to continue? (y => yes) (n => no) (ctrl+c => quit)"
 		} else if addDownloadTab.url == "" {
@@ -498,10 +550,15 @@ func (tab Tab) View() string {
 				addDownloadTab.fileNameInput.View(),
 				"(ctrl+c => quit)",
 			) + "\n"
+		} else {
+			// Show download progress if available
+			if addDownloadTab.progress > 0 {
+				view += fmt.Sprintf("\nDownload Progress: %d%%", addDownloadTab.progress)
+			}
 		}
 	} else if tab.num == 2 {
 		var downloadsTab = tab.TAB.(DownloadsTab)
-		view = "                   ----------------------------------------------------------- Downloads Tab -----------------------------------------------------------"
+		view = "----------------------------------------------------------- Downloads Tab -----------------------------------------------------------"
 		if !downloadsTab.deleteAction {
 			view = fmt.Sprintf("%v\nSelect a download:", view)
 			for i, download := range downloadsTab.downloads {
@@ -513,7 +570,7 @@ func (tab Tab) View() string {
 				if i == downloadsTab.cursorIndex {
 					cursor = "> "
 				}
-				view = fmt.Sprintf("%v\n%vURL: %v    Queue: %v    Status: %v    Speed: %vKB/s    Progress: %v", view, cursor, download.URL, queue.Name, download.Status, download.CurrentSpeed, download.Progress)
+				view = fmt.Sprintf("%v\n%vQueue: %v    Status: %v    Speed: %vKB/s    Progress: %v", view, cursor, queue.Name, download.Status, download.CurrentSpeed, download.Progress)
 			}
 			view = fmt.Sprintf("%v\n\n(ctrl+a => pause/resume) (ctrl+s => retry) (ctrl+d => delete) (ctrl+c => quit)", view)
 		}

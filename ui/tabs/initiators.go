@@ -61,6 +61,7 @@ func InitiateDownloadsTab(Hndlr *Handlers) Tab {
 			downloads:    downloads,
 			cursorIndex:  0,
 			deleteAction: false,
+			message: "",
 		},
 	}
 }

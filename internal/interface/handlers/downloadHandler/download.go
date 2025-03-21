@@ -3,11 +3,13 @@ package downloadHandler
 import (
 	"context"
 	"fmt"
+	"log/slog"
+
 	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/model"
 	"github.com/SUT-technology/download-manager-golang/internal/service"
 	"github.com/SUT-technology/download-manager-golang/pkg/tools/slogger"
-	"log/slog"
 	//"io"
 	//"net/http"
 	//"os"
@@ -65,16 +67,26 @@ func (h DownloadHndlr) DeleteDownload(id string) (*entity.Download, error) {
 	return download, nil
 }
 
-func (h DownloadHndlr) CreateDownload(downloadDto dto.DownloadDto) error {
+func (h DownloadHndlr) CreateDownload(downloadDto dto.DownloadDto) (*entity.Download, error) {
 	ctx := context.Background()
 
 	slogger.Debug(ctx, "recieve request", slog.Any("download", downloadDto))
 
-	err := h.Services.DownloadSrvc.CreateDownload(ctx, downloadDto)
+	download, err := h.Services.DownloadSrvc.CreateDownload(ctx, downloadDto)
 	if err != nil {
 		slogger.Debug(ctx, "create download", slog.Any("download", downloadDto), slogger.Err("error", err))
-		return fmt.Errorf("create download: %w", err)
+		return nil, fmt.Errorf("create download: %w", err)
 	}
 
-	return nil
+	return download, nil
+}
+
+func (h DownloadHndlr) DownloadWorker(download *entity.Download, progressChan chan<- model.DownloadProgressMsg, controlChan <-chan model.DownloadControlMessage) {
+	ctx := context.Background()
+
+	slogger.Debug(ctx, "recieve request", slog.Any("download", download))
+
+	h.Services.DownloadSrvc.DownloadWorker(download, progressChan, controlChan)
+
+	return
 }

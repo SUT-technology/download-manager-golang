@@ -1,15 +1,18 @@
 package tabs
 
 import (
-	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
-	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
 	"os"
 	"os/exec"
 	"runtime"
 	"time"
+
+	"github.com/SUT-technology/download-manager-golang/internal/application/services/downloadsrvc"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
+	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
-func CreateDownload(url, queueId, fileName string) error {
+func CreateDownload(url, queueId, fileName string) (*entity.Download, error) {
 	return hndlr.DownloadHandler.CreateDownload(dto.DownloadDto{
 		URL:      url,
 		QueueID:  queueId,
@@ -70,4 +73,10 @@ func getInterval(startTime string, endTime string) (date entity.TimeInterval) {
 		date.EndTime = endTime
 	}
 	return date
+}
+
+func WatchProgressCmd() tea.Cmd {
+	return func() tea.Msg {
+		return <-downloadsrvc.ProgressChan
+	}
 }
