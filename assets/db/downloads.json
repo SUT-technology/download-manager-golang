@@ -1,20 +1,14 @@
 [
-  {
-    "id": "2dc7598d-91a1-4f5c-9a99-bcd9a4c5212f",
-    "url": "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
-    "queue_id": "a187f448-12f2-4203-9197-fc49425f05e8",
-    "fileName": "souroosh",
-    "status": 0,
-    "currentSpeed": 0,
-    "progress": 0
-  },
-  {
-    "id": "b59fd187-0d3b-4a06-b8a2-3d7ea025e49f",
-    "url": "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
-    "queue_id": "a187f448-12f2-4203-9197-fc49425f05e8",
-    "fileName": "sourosoh",
-    "status": 0,
-    "currentSpeed": 0,
-    "progress": 0
-  }
+    {
+        "id": "9e1d31f8-ac42-457c-88e7-eb1ab19daf03",
+        "url": "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
+        "queue_id": "a187f448-12f2-4203-9197-fc49425f05e8",
+        "fileName": "ل5",
+        "totalSize": 4963048,
+        "downloaded": 4963048,
+        "progress": 100,
+        "currentSpeed": 99.99999999999999,
+        "status": "completed",
+        "outPath": "tmp/souroosh/ل5.mp3"
+    }
 ]

@@ -3,6 +3,8 @@ package queuesrvc
 import (
 	"context"
 	"fmt"
+	"os"
+
 	"github.com/SUT-technology/download-manager-golang/internal/domain/dto"
 
 	"github.com/SUT-technology/download-manager-golang/internal/domain/entity"
@@ -102,6 +104,10 @@ func (q QueueService) CreateQueue(ctx context.Context, dto dto.QueueDto) error {
 	err = q.db.Query(queryFunc)
 	if err != nil {
 		return err
+	}
+	err = os.MkdirAll(dto.SavePath, 0755)
+	if err != nil {
+		return fmt.Errorf("Error creating directories: %w", err)
 	}
 
 	return nil

@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/SUT-technology/download-manager-golang/internal/interface/config"
 	"github.com/SUT-technology/download-manager-golang/internal/repository"
 )
+
+var dbMutex sync.Mutex
 
 type Pool struct {
 	downloadPath string
@@ -41,6 +44,8 @@ func (p *Pool) Close() error {
 }
 
 func (p *Pool) loadData(filePath string, dst interface{}) error {
+	dbMutex.Lock()
+    defer dbMutex.Unlock()
 	files, err := os.Open(filePath)
 	if err != nil {
 		return fmt.Errorf("could not open downloads/queues file: %v", err)
@@ -54,6 +59,8 @@ func (p *Pool) loadData(filePath string, dst interface{}) error {
 }
 
 func (p *Pool) saveData(filePath string, src interface{}) error {
+	dbMutex.Lock()
+    defer dbMutex.Unlock()
 	files, err := os.Create(filePath)
 	if err != nil {
 		return fmt.Errorf("could not create downloads/queues file: %v", err)

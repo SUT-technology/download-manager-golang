@@ -1,1 +1,79 @@
-[{"id":"a187f448-12f2-4203-9197-fc49425f05e8","name":"souroosh","savePath":"tmp/souroosh","maximumDownloads":4,"maximumBandWidth":45,"activityInterval":{"StartTime":"2025-12-12T23:00:00Z","EndTime":"2025-12-12T23:00:00Z"}},{"id":"637d9b78-f79c-481c-ab1e-f7855be20c17","name":"erfan","savePath":"tmp/erfan","maximumDownloads":10,"maximumBandWidth":1000,"activityInterval":{"StartTime":"2025-12-12T08:00:00Z","EndTime":"2025-12-12T08:00:00Z"}},{"id":"f041c711-b273-460e-8a6a-e0f7dccde1ba","name":"mahdi","savePath":"tmp/mahdi","maximumDownloads":13,"maximumBandWidth":1000,"activityInterval":{"StartTime":"0001-01-01T00:00:00Z","EndTime":"9999-12-30T23:59:00Z"}}]
+[
+    {
+        "id": "a187f448-12f2-4203-9197-fc49425f05e8",
+        "name": "souroosh",
+        "savePath": "tmp/souroosh",
+        "maximumDownloads": 2,
+        "maximumBandWidth": 100,
+        "activityInterval": {
+            "StartTime": "2025-12-12T23:00:00Z",
+            "EndTime": "2025-12-12T23:00:00Z"
+        }
+    },
+    {
+        "id": "637d9b78-f79c-481c-ab1e-f7855be20c17",
+        "name": "erfan",
+        "savePath": "tmp/erfan",
+        "maximumDownloads": 10,
+        "maximumBandWidth": 1000,
+        "activityInterval": {
+            "StartTime": "2025-12-12T08:00:00Z",
+            "EndTime": "2025-12-12T08:00:00Z"
+        }
+    },
+    {
+        "id": "f041c711-b273-460e-8a6a-e0f7dccde1ba",
+        "name": "mahdi",
+        "savePath": "tmp/mahdi",
+        "maximumDownloads": 13,
+        "maximumBandWidth": 1000,
+        "activityInterval": {
+            "StartTime": "0001-01-01T00:00:00Z",
+            "EndTime": "9999-12-30T23:59:00Z"
+        }
+    },
+    {
+        "id": "de6a1748-fee6-493d-9057-459500d3438a",
+        "name": "sa",
+        "savePath": "tmp/souroosh",
+        "maximumDownloads": 5,
+        "maximumBandWidth": 100,
+        "activityInterval": {
+            "StartTime": "0000-01-01T19:10:00Z",
+            "EndTime": "0000-01-01T19:11:00Z"
+        }
+    },
+    {
+        "id": "ffe9c7be-6a86-4caf-aaff-40dfd1f4084e",
+        "name": "testi",
+        "savePath": "tmp/testi1",
+        "maximumDownloads": 5,
+        "maximumBandWidth": 100,
+        "activityInterval": {
+            "StartTime": "0000-01-01T00:00:00Z",
+            "EndTime": "0000-01-01T23:59:59Z"
+        }
+    },
+    {
+        "id": "845f4a2f-9a78-4915-9a35-7d434c45ec87",
+        "name": "ter",
+        "savePath": "/tmp/ter",
+        "maximumDownloads": 5,
+        "maximumBandWidth": 100,
+        "activityInterval": {
+            "StartTime": "0000-01-01T00:00:00Z",
+            "EndTime": "0000-01-01T23:59:59Z"
+        }
+    },
+    {
+        "id": "09ec5123-a1ba-4920-9e6b-3c6fbc0fa807",
+        "name": "dsaq",
+        "savePath": "tmp/testi1",
+        "maximumDownloads": 5,
+        "maximumBandWidth": 5000,
+        "activityInterval": {
+            "StartTime": "0000-01-01T00:00:00Z",
+            "EndTime": "0000-01-01T23:59:59Z"
+        }
+    }
+]
