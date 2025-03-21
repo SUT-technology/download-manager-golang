@@ -30,7 +30,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyLeft:
 			if tab.num == 3 {
 				ClearScreen()
-				return InitiateDownloadsTab(&hndlr), cmd
+				return InitiateDownloadsTab(&hndlr), WatchProgressCmd()
 			} else if tab.num == 1 {
 				ClearScreen()
 				return InitiateQueuesTab(&hndlr), cmd
@@ -41,7 +41,7 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyRight:
 			if tab.num == 1 {
 				ClearScreen()
-				return InitiateDownloadsTab(&hndlr), cmd
+				return InitiateDownloadsTab(&hndlr), WatchProgressCmd()
 			} else if tab.num == 2 {
 				ClearScreen()
 				return InitiateQueuesTab(&hndlr), cmd
@@ -150,7 +150,8 @@ func (tab Tab) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case tea.KeyCtrlA:
 					//pause/resume
 					curDl := downloadsTab.downloads[downloadsTab.cursorIndex]
-					if controlChan, exists := downloadsrvc.ControlChannels[curDl.ID]; exists {
+					controlChan, exists := downloadsrvc.ControlChannels[curDl.ID]
+					if exists {
 						if curDl.Status == "downloading" {
 							controlChan <- model.PauseCommand
 						} else if curDl.Status == "paused" {

@@ -19,9 +19,7 @@ import (
 )
 
 var (
-	// ProgressChan is where all download workers send periodic progress updates.
 	ProgressChan = make(chan model.DownloadProgressMsg)
-	// ControlChannels maps a download ID to its control channel.
 	ControlChannels = make(map[string]chan model.DownloadControlMessage)
 )
 
@@ -76,7 +74,7 @@ func (d DownloadService) GetDownloads(ctx context.Context) ([]entity.Download, e
 		return nil, err
 	}
 
-	d.StartPendingDownloads(downloads)
+	// d.StartPendingDownloads(downloads)
 
 	return downloads, nil
 }
