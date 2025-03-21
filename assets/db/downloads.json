@@ -1,1 +1,14 @@
-[{"id":"9e1d31f8-ac42-457c-88e7-eb1ab19daf03","url":"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3","queue_id":"a187f448-12f2-4203-9197-fc49425f05e8","fileName":"ل5","totalSize":4963048,"downloaded":4963048,"progress":100,"currentSpeed":99.99999999999999,"status":"completed","outPath":"tmp/souroosh/ل5.mp3"},{"id":"28fd66de-3d3a-4c81-8a05-95b4d40e27bc","url":"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3","queue_id":"de6a1748-fee6-493d-9057-459500d3438a","fileName":"saq","totalSize":4963048,"downloaded":2588672,"progress":52.15891524724323,"currentSpeed":37.02849134123444,"status":"completed","outPath":"tmp/souroosh/saq.mp3"},{"id":"67fc928d-a715-40d7-b5c8-946f19bec35d","url":"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3","queue_id":"09ec5123-a1ba-4920-9e6b-3c6fbc0fa807","fileName":"aaa111","totalSize":4963048,"downloaded":4963048,"progress":100,"currentSpeed":265.83490380414963,"status":"completed","outPath":"tmp/testi1/aaa111.mp3"},{"id":"2c63025d-0669-4c60-b8b0-c23fa8027e73","url":"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3","queue_id":"a187f448-12f2-4203-9197-fc49425f05e8","fileName":"dah7","totalSize":4963048,"downloaded":0,"progress":0,"currentSpeed":0,"status":"downloading","outPath":"tmp/souroosh/dah7.mp3"},{"id":"c7ead86b-b476-41a5-8090-85b241015865","url":"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3","queue_id":"09ec5123-a1ba-4920-9e6b-3c6fbc0fa807","fileName":"Bahram - Gear Box.mp3","totalSize":4963048,"downloaded":4963048,"progress":100,"currentSpeed":215.80258320156975,"status":"completed","outPath":"tmp/testi1/Bahram - Gear Box.mp3.mp3"},{"id":"ae9a85f7-3e6e-44d2-993c-2f00850c308a","url":"https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3","queue_id":"09ec5123-a1ba-4920-9e6b-3c6fbc0fa807","fileName":"dsa13","totalSize":4963048,"downloaded":4292608,"progress":86.49136578973244,"currentSpeed":273.563896404772,"status":"downloading","outPath":"tmp/testi1/dsa13.mp3"}]
+[
+    {
+        "id": "9e1d31f8-ac42-457c-88e7-eb1ab19daf03",
+        "url": "https://dl.nakaman-music.ir/Music/BAHRAM/Forsat/Bahram%20-%20Gear%20Box.mp3",
+        "queue_id": "a187f448-12f2-4203-9197-fc49425f05e8",
+        "fileName": "ل5",
+        "totalSize": 4963048,
+        "downloaded": 4963048,
+        "progress": 100,
+        "currentSpeed": 99.99999999999999,
+        "status": "completed",
+        "outPath": "tmp/souroosh/ل5.mp3"
+    }
+]

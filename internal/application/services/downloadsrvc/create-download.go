@@ -68,8 +68,16 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
 	incrementActiveDownload(download.QueueId, download.ID)
 
 	const chunkSize = 32 * 1024 // 32 KB per iteration.
-	lastBytes := download.Downloaded
-    lastUpdate := time.Now()
+
+	// Open the output file for writing
+	outFile, err := os.OpenFile(download.OutPath, os.O_WRONLY|os.O_CREATE, 0644)
+	if err != nil {
+		fmt.Println("Error opening output file:", err)
+		return
+	}
+	defer outFile.Close()
+
+	// Loop to download the file in chunks
 	for download.Downloaded < download.TotalSize {
 		// Check for pause/resume commands.
 		// Look up the queue to retrieve MaximumBandWidth.
@@ -80,9 +88,11 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
 		}
 
 		waitForAllowedTime(*q)
+
 		select {
 		case ctrl := <-controlChan:
 			if ctrl == model.PauseCommand {
+				// Pause download, update status, and wait for resume command.
 				download.Status = "paused"
 				progressChan <- model.DownloadProgressMsg{
 					DownloadID: download.ID,
@@ -92,88 +102,99 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
 					Downloaded: download.Downloaded,
 				}
 				d.UpdateDownloadInDatabase(*download)
-				// Decrement active count when pausedownload.
 				decrementActiveDownload(download.QueueId, download.ID)
-				// Block until resume is receivedownload.
+
+				// Block until resume is received.
 				for {
-                    ctrl2 := <-controlChan
-                    if ctrl2 == model.ResumeCommand {
-                        download.Status = "downloading"
-                        lastUpdate = time.Now()
-                        lastBytes = download.Downloaded
-                        break
-                    }
-                }
+					ctrl2 := <-controlChan
+					if ctrl2 == model.ResumeCommand {
+						download.Status = "downloading"
+						d.UpdateDownloadInDatabase(*download)
+						incrementActiveDownload(download.QueueId, download.ID)
+						break
+					}
+				}
 			}
 		default:
-			// Set up a GET request with the appropriate Range header.
-            req, err := http.NewRequest("GET", download.URL, nil)
-            if err != nil {
-                fmt.Println("Error creating GET request:", err)
-                break
-            }
-            rangeHeader := fmt.Sprintf("bytes=%d-%d", download.Downloaded, download.Downloaded+chunkSize-1)
-            if download.Downloaded+chunkSize > download.TotalSize {
-                rangeHeader = fmt.Sprintf("bytes=%d-", download.Downloaded)
-            }
-            req.Header.Set("Range", rangeHeader)
+			// Calculate the range for the chunk.
+			startChunk := time.Now()
+			endRange := download.Downloaded + chunkSize - 1
+			if download.Downloaded+chunkSize > download.TotalSize {
+				endRange = download.TotalSize - 1
+			}
 
-            resp, err := http.DefaultClient.Do(req)
-            if err != nil {
-                fmt.Println("Error performing GET request:", err)
-                break
-            }
+			req, err := http.NewRequest("GET", download.URL, nil)
+			if err != nil {
+				fmt.Println("Error creating GET request:", err)
+				break
+			}
 
-            // Open file in append mode.
-            outFile, err := os.OpenFile(download.OutPath, os.O_WRONLY|os.O_APPEND, 0644)
-            if err != nil {
-                fmt.Println("Error opening output file:", err)
-                resp.Body.Close()
-                break
-            }
+			req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", download.Downloaded, endRange))
 
-            // Copy up to chunkSize bytes from the response.
-            n, err := io.CopyN(outFile, resp.Body, chunkSize)
-            outFile.Close()
-            resp.Body.Close()
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				fmt.Println("Error performing GET request:", err)
+				break
+			}
+			defer resp.Body.Close()
 
-            if n > 0 {
-                download.Downloaded += n
-                if download.Downloaded > download.TotalSize {
-                    download.Downloaded = download.TotalSize
-                }
-                download.Progress = float64(download.Downloaded) / float64(download.TotalSize) * 100
+			// Copy the chunk to the output file.
+			n, err := io.CopyN(outFile, resp.Body, chunkSize)
+			if err != nil && err != io.EOF {
+				fmt.Println("Error reading chunk:", err)
+				break
+			}
 
-                now := time.Now()
-                elapsed := now.Sub(lastUpdate).Seconds()
-                var speed float64
-                if elapsed > 0 {
-                    speed = float64(download.Downloaded-lastBytes) / elapsed / 1024.0
-                }
-                download.CurrentSpeed = speed
+			// Measure the time taken to download the chunk and compute speed.
+			elapsed := time.Since(startChunk).Seconds()
+			activeCount := GetActiveDownload(download.QueueId)
+			if activeCount < 1 {
+				activeCount = 1
+			}
 
-                progressChan <- model.DownloadProgressMsg{
-                    DownloadID: download.ID,
-                    Progress:   download.Progress,
-                    Speed:      download.CurrentSpeed,
-                    Status:     download.Status,
-                    Downloaded: download.Downloaded,
-                }
-                d.UpdateDownloadInDatabase(*download)
+			// Compute allocated speed for this download.
+			allocatedSpeed := q.MaximumBandWidth / float64(activeCount) // in KB/s
 
-                lastUpdate = now
-                lastBytes = download.Downloaded
-            }
-            if err != nil {
-                // Ignore io.EOF as it signals the end of the current request.
-                if err != io.EOF {
-                    fmt.Println("Error reading response body:", err)
-                }
-            }
+			// Convert bytes downloaded (n) to KB.
+			chunkKB := float64(n) / 1024.0
+			desiredDuration := chunkKB / allocatedSpeed // seconds
+
+			// Sleep if the chunk was downloaded faster than the ideal duration.
+			sleepTime := desiredDuration - elapsed
+			if sleepTime > 0 {
+				time.Sleep(time.Duration(sleepTime * float64(time.Second)))
+			}
+
+			// Compute the measured speed, incorporating delays.
+			effectiveElapsed := elapsed
+			if sleepTime > 0 {
+				effectiveElapsed += sleepTime
+			}
+			measuredSpeed := chunkKB / effectiveElapsed
+
+			// Update the download record.
+			download.Downloaded += n
+			if download.Downloaded > download.TotalSize {
+				download.Downloaded = download.TotalSize
+			}
+
+			// Update progress and speed.
+			download.Progress = float64(download.Downloaded) / float64(download.TotalSize) * 100
+			download.CurrentSpeed = measuredSpeed
+
+			progressChan <- model.DownloadProgressMsg{
+				DownloadID: download.ID,
+				Progress:   download.Progress,
+				Speed:      measuredSpeed,
+				Status:     download.Status,
+				Downloaded: download.Downloaded,
+			}
+
+			d.UpdateDownloadInDatabase(*download)
 		}
-
 	}
 
+	// Mark the download as completed after finishing.
 	download.Status = "completed"
 	progressChan <- model.DownloadProgressMsg{
 		DownloadID: download.ID,
@@ -185,6 +206,7 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
 	d.UpdateDownloadInDatabase(*download)
 	decrementActiveDownload(download.QueueId, download.ID)
 }
+
 
 func (d DownloadService) StartPendingDownloads(downloads []entity.Download) {
 	for i := range downloads {
