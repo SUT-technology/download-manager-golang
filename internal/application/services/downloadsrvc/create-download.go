@@ -70,14 +70,14 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
     const chunkSize = 32 * 1024 // 32 KB per iteration.
 
     for download.Downloaded < download.TotalSize {
-        // Retrieve the queue which holds the bandwidth limit.
+        // Look up the queue to retrieve MaximumBandWidth.
         q, err := d.GetQueueById(download.QueueId)
         if err != nil {
             fmt.Printf("Queue not found for download %d\n", download.ID)
             break
         }
 
-        // Wait until the current time is allowed by the queue’s time window.
+        // Wait for allowed time (if needed).
         waitForAllowedTime(*q)
 
         // Check for pause/resume commands.
@@ -94,7 +94,7 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
                 }
                 d.UpdateDownloadInDatabase(*download)
                 decrementActiveDownload(download.QueueId, download.ID)
-                // Wait until resume is received.
+                // Block until resume is received.
                 for {
                     ctrl2 := <-controlChan
                     if ctrl2 == model.ResumeCommand {
@@ -106,12 +106,11 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
                 }
             }
         default:
-            // No control command, proceed.
+            // Proceed if no pause/resume command.
         }
 
         startChunk := time.Now()
 
-        // Prepare the request.
         req, err := http.NewRequest("GET", download.URL, nil)
         if err != nil {
             fmt.Println("Error creating GET request:", err)
@@ -129,47 +128,13 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
             break
         }
 
-        // If the server does not support Range requests:
-        if resp.StatusCode == http.StatusOK {
-            // If we have not yet downloaded anything, then assume a full download.
-            if download.Downloaded == 0 {
-                fmt.Println("Server did not honor Range, performing full download")
-                // Overwrite the file; use os.Create (which truncates).
-                outFile, err := os.Create(download.OutPath)
-                if err != nil {
-                    fmt.Println("Error creating output file for full download:", err)
-                    resp.Body.Close()
-                    break
-                }
-                n, err := io.Copy(outFile, resp.Body)
-                outFile.Close()
-                resp.Body.Close()
-                download.Downloaded = n
-                download.Progress = 100
-                download.CurrentSpeed = float64(n) / (time.Since(startChunk).Seconds() * 1024) // KB/s
-                progressChan <- model.DownloadProgressMsg{
-                    DownloadID: download.ID,
-                    Progress:   download.Progress,
-                    Speed:      download.CurrentSpeed,
-                    Status:     download.Status,
-                    Downloaded: download.Downloaded,
-                }
-                d.UpdateDownloadInDatabase(*download)
-                break
-            } else {
-                // If we already have some bytes, then the server does not support resume.
-                fmt.Println("Server does not support resume")
-                resp.Body.Close()
-                break
-            }
-        } else if resp.StatusCode != http.StatusPartialContent {
-            // Unexpected status code.
+        // IMPORTANT: Check that the server is returning a partial content response.
+        if resp.StatusCode != http.StatusPartialContent && resp.StatusCode != http.StatusOK {
             fmt.Printf("Unexpected response status %s for download %d\n", resp.Status, download.ID)
             resp.Body.Close()
             break
         }
 
-        // Expected status is 206; continue to read a chunk.
         outFile, err := os.OpenFile(download.OutPath, os.O_WRONLY|os.O_APPEND, 0644)
         if err != nil {
             fmt.Println("Error opening output file:", err)
@@ -177,21 +142,26 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
             break
         }
 
+        // Copy up to chunkSize bytes.
         n, err := io.CopyN(outFile, resp.Body, chunkSize)
         outFile.Close()
         resp.Body.Close()
 
-        // Calculate time taken to download the chunk.
+        // Measure the time taken to read the chunk.
         elapsed := time.Since(startChunk).Seconds()
 
         activeCount := GetActiveDownload(download.QueueId)
         if activeCount < 1 {
             activeCount = 1
         }
+        // Compute the speed allotment: the allocated speed for this download.
         allocatedSpeed := q.MaximumBandWidth / float64(activeCount) // in KB/s
 
+        // Convert bytes downloaded (n) to KB.
         chunkKB := float64(n) / 1024.0
-        desiredDuration := chunkKB / allocatedSpeed
+        desiredDuration := chunkKB / allocatedSpeed // seconds
+
+        // Sleep if the chunk was downloaded faster than the desired duration.
         sleepTime := desiredDuration - elapsed
         if sleepTime > 0 {
             time.Sleep(time.Duration(sleepTime * float64(time.Second)))
@@ -201,8 +171,10 @@ func (d DownloadService) DownloadWorker(download *entity.Download, progressChan 
         if sleepTime > 0 {
             effectiveElapsed += sleepTime
         }
+        // Compute the measured speed, incorporating any delays.
         measuredSpeed := chunkKB / effectiveElapsed
 
+        // Update the download record.
         download.Downloaded += n
         if download.Downloaded > download.TotalSize {
             download.Downloaded = download.TotalSize
